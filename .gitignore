@@ -21,6 +21,9 @@ desktop.ini
 # Logs
 *.log
 
+# Dashboard cache
+_dashboard/
+
 # IDE
 .vscode/
 .cursor/
