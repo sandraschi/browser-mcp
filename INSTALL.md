@@ -1,67 +1,114 @@
 # Installation
 
-## 🚀 Quick Start (recommended)
+## Quick Start
 
 ```powershell
-# Install just if you don't have it
-winget install Casey.Just    # Windows
-# scoop install just          # Windows (alternative)
-# brew install just           # macOS
-# sudo apt install just       # Debian/Ubuntu
-# cargo install just          # Linux (Rust)
+# Prerequisites: Python 3.13+, uv (https://docs.astral.sh/uv/)
 
 git clone https://github.com/sandraschi/browser-mcp
 cd browser-mcp
-just
+
+# Install Python dependencies
+uv sync
+
+# Install Playwright browsers
+uv run playwright install chromium
+
+# Start the server (HTTP mode — port 10780)
+uv run browser-mcp --serve
+
+# In another terminal — start the webapp dashboard (port 10781)
+cd webapp
+npm install
+npm run dev
 ```
 
-The interactive recipe dashboard opens in your browser. From there:
+Open `http://localhost:10781` in your browser.
+
+---
+
+## MCP Client Configuration
+
+### Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "browser-mcp": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "C:/path/to/browser-mcp",
+        "run",
+        "browser-mcp"
+      ],
+      "env": {
+        "PYTHONPATH": "C:/path/to/browser-mcp/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+### OpenCode
+
+```json
+{
+  "browser-mcp": {
+    "command": "uv",
+    "args": ["--directory", "C:/path/to/browser-mcp", "run", "browser-mcp"],
+    "env": {
+      "PYTHONPATH": "C:/path/to/browser-mcp/src",
+      "PYTHONUNBUFFERED": "1"
+    }
+  }
+}
+```
+
+---
+
+## Manual Setup
 
 ```powershell
-just bootstrap   # install all dependencies
-just serve       # start the server
-just web         # start the frontend (if applicable)
+# Create and activate virtual environment
+uv venv
+.venv\Scripts\activate
+
+# Install with dev dependencies
+uv sync --group dev
+
+# Install Playwright browsers
+uv run playwright install chromium
+
+# Run tests
+uv run pytest -q
+
+# Run linter
+uv run ruff check src/
 ```
 
-> **Why not `pip install`?** MCP servers bundle webapps, configs, project scaffolding, and tooling that a flat Python package can't deliver. PyPI offers no safety advantage — it doesn't audit packages either. `just` gives you the complete, ready-to-run stack.
+---
+
+## Docker (coming soon)
+
+Docker support is planned. Track progress in [issue #1](https://github.com/sandraschi/browser-mcp/issues/1).
 
 ---
 
-## 🐌 Traditional Setup
-
-If you prefer not to use `just`:
-
-1. Install [Python 3.13+](https://python.org) and [uv](https://docs.astral.sh/uv/)
-2. Clone and enter the repo:
-   ```powershell
-   git clone https://github.com/sandraschi/browser-mcp
-   cd browser-mcp
-   ```
-3. Install dependencies:
-   ```powershell
-   uv sync --all-extras
-   ```
-4. Start the server:
-   ```powershell
-   # stdio mode (for MCP clients like Claude Desktop)
-   uv run python -m browser_mcp.server
-
-   # HTTP mode (for web dashboard)
-   uv run uvicorn browser_mcp.server:app --port 10780
-   ```
-5. Open `http://localhost:10780` or the frontend URL.
-
----
-
-## ❓ Troubleshooting
+## Troubleshooting
 
 | Issue | Fix |
-|---|---|
-| `just` not found | Install via `winget install Casey.Just`, `scoop install just`, or `brew install just` |
-| Port conflict | Run `just kill-all` to clear fleet ports (10700–11000) |
-| Dependencies out of sync | `uv sync --all-extras` |
-| Something else | [Open a GitHub issue](https://github.com/sandraschi/browser-mcp/issues) |
+|-------|-----|
+| `playwright` not found | Run `uv run playwright install chromium` |
+| Port 10780 in use | Kill the process: `Get-NetTCPConnection -LocalPort 10780 \| Stop-Process -Id $_.OwningProcess` |
+| Firefox bookmarks locked | Close Firefox completely, or use `force_access=True` for read operations |
+| Chrome bookmarks not found | Ensure Chrome has bookmarks saved to the default profile |
+| `uv` not found | Install it: `powershell -c "irm https://astral.sh/uv/install.ps1 \| iex"` |
+| Other | [Open a GitHub issue](https://github.com/sandraschi/browser-mcp/issues) |
 
 ---
 
-*See the main [README](README.md) for feature overview and documentation.*
+*See [README.md](README.md) for full feature documentation.*

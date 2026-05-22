@@ -1,13 +1,17 @@
 """
-FastMCP 3.2 server — Playwright browser automation tools.
+FastMCP 3.2 server — Browser automation and bookmark management for Chrome, Firefox, Edge, Brave.
 
 Tools:
-  browse_page(url)        — fetch page content as markdown-like text
-  click_element(selector) — click an element on the current page
-  extract_text(selector)  — extract text from an element
-  screenshot()            — take a viewport screenshot, return base64
-  fill_input(selector, text) — type text into an input field
-  press_key(key)          — press a keyboard key
+  browse_page(url)            — fetch page content as markdown-like text
+  click_element(selector)     — click an element on the current page
+  extract_text(selector)      — extract text from an element
+  screenshot()                — take a viewport screenshot, return base64
+  fill_input(selector, text)  — type text into an input field
+  press_key(key)              — press a keyboard key
+  close_browser()             — close the browser and release resources
+  browser_bookmarks(...)      — universal bookmark management (registering via bookmarks.portmanteau)
+  list_browsers()             — detect installed browsers and profiles
+  browse_url_cli(url)         — headless screenshot/dom via CLI (no Playwright)
 """
 
 from __future__ import annotations
@@ -24,9 +28,12 @@ logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     "browser-mcp",
-    instructions="Playwright browser automation — browse, click, screenshot, extract text from web pages.",
-    version="0.1.0",
+    instructions="Browser automation and bookmark management — Playwright + CDP + native bookmarks.",
+    version="0.2.0",
 )
+
+# Register bookmark tools by importing the portmanteau module
+from browser_mcp.bookmarks import portmanteau  # noqa: F401, E402
 
 # MCP Bridge: proxy to external MCP servers via MCP_BRIDGE_URLS env var
 _bridge_urls = os.environ.get("MCP_BRIDGE_URLS", "")
@@ -234,3 +241,98 @@ async def close_browser() -> dict:
     """CLOSE_BROWSER — Close the browser and release resources."""
     await _close()
     return {"success": True, "message": "Browser closed"}
+
+
+# ── Browser detection & CLI tools ─────────────────────────────────────────────
+
+
+@mcp.tool()
+async def list_browsers() -> dict:
+    """LIST_BROWSERS — Detect installed browsers and available profiles.
+
+    Scans common installation paths for Chrome, Firefox, Edge, and Brave.
+    Also reports Firefox profiles from profiles.ini.
+
+    Returns:
+        dict with installed browsers and their paths.
+    """
+    import os as _os
+
+    browsers = {}
+    # Check common paths
+    checks = {
+        "chrome": [r"Google\Chrome\Application\chrome.exe", r"Google\Chrome SxS\Application\chrome.exe"],
+        "firefox": [r"Mozilla Firefox\firefox.exe"],
+        "edge": [r"Microsoft\Edge\Application\msedge.exe"],
+        "brave": [r"BraveSoftware\Brave-Browser\Application\brave.exe"],
+    }
+    pf = _os.environ.get("ProgramFiles", "") or r"C:\Program Files"
+    pf86 = _os.environ.get("ProgramFiles(x86)", "") or r"C:\Program Files (x86)"
+    for name, paths in checks.items():
+        found = None
+        for p in paths:
+            for base in [pf, pf86]:
+                full = _os.path.join(base, p)
+                if _os.path.exists(full):
+                    found = full
+                    break
+            if found:
+                break
+        if found:
+            browsers[name] = {"path": found, "installed": True}
+        else:
+            browsers[name] = {"installed": False}
+    # Firefox profiles
+    try:
+        from .bookmarks.firefox.utils import parse_profiles_ini
+        profiles = parse_profiles_ini()
+        if profiles:
+            browsers["firefox"]["profiles"] = list(profiles.keys())
+    except Exception:
+        pass
+    return {"success": True, "browsers": browsers}
+
+
+@mcp.tool()
+async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
+    """BROWSE_URL_CLI — Navigate to a URL using headless CLI (no Playwright).
+
+    Uses chrome --headless --dump-dom or firefox --screenshot for quick
+    operations without the overhead of a full Playwright browser session.
+
+    Args:
+        url: The URL to visit.
+        browser: 'chrome' or 'firefox' (default chrome).
+
+    Returns:
+        Extracted text content (Chrome) or screenshot path (Firefox).
+    """
+    import subprocess
+    import tempfile
+
+    browser = browser.lower()
+    if browser == "chrome":
+        try:
+            result = subprocess.run(
+                ["chrome", "--headless", "--dump-dom", url],
+                capture_output=True, text=True, timeout=30,
+            )
+            text = result.stdout[:20000] if result.stdout else (result.stderr or "No output")
+            return {"success": True, "browser": "chrome", "url": url, "text": text}
+        except FileNotFoundError:
+            return {"success": False, "error": "Chrome not found on PATH. Install Chrome or use browse_page instead."}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    elif browser == "firefox":
+        try:
+            tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+            result = subprocess.run(
+                ["firefox", "--headless", "--screenshot", tmp.name, url],
+                capture_output=True, text=True, timeout=30,
+            )
+            return {"success": True, "browser": "firefox", "url": url, "screenshot": tmp.name}
+        except FileNotFoundError:
+            return {"success": False, "error": "Firefox not found on PATH. Install Firefox or use browse_page instead."}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    return {"success": False, "error": f"Unsupported browser: {browser}"}

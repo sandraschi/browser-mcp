@@ -15,6 +15,7 @@ class Settings:
     port: int
     mcp_http_path: str
     headless: bool
+    frontend_port: int
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -23,6 +24,7 @@ class Settings:
             port=int(os.getenv("BROWSER_MCP_PORT", "10780")),
             mcp_http_path=os.getenv("BROWSER_MCP_HTTP_PATH", "/mcp"),
             headless=os.getenv("BROWSER_HEADLESS", "true").lower() == "true",
+            frontend_port=int(os.getenv("BROWSER_MCP_FRONTEND_PORT", "10781")),
         )
 
 
