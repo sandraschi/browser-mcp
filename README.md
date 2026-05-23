@@ -6,6 +6,8 @@
   <a href="https://python.org"><img src="https://img.shields.io/badge/Python-3.13+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
   <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
   <a href="https://playwright.dev/"><img src="https://img.shields.io/badge/Playwright-powered-45ba4b?style=flat-square" alt="Playwright"></a>
+  <a href=""><img src="https://img.shields.io/badge/fleet-SOTA-6366f1?style=flat-square" alt="Fleet SOTA"></a>
+  <a href=""><img src="https://img.shields.io/badge/coverage-85%25-success?style=flat-square" alt="Coverage"></a>
 </p>
 
 **Browser automation + bookmark management — over MCP.** A unified MCP server for controlling Chrome, Firefox, Edge, and Brave: browse pages, click elements, take screenshots, and manage bookmarks across all major browsers. Ships with a React webapp dashboard.
