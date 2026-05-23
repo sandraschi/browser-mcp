@@ -34,7 +34,7 @@ def build_app() -> FastAPI:
         return {
             "ok": True,
             "service": "browser-mcp",
-            "version": "0.2.0",
+                    "version": "0.3.0",
             "port": settings.port,
             "frontend_port": settings.frontend_port,
             "mcp_http": f"http://{settings.host}:{settings.port}{settings.mcp_http_path}",

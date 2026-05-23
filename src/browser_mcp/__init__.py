@@ -1,2 +1,2 @@
-"""browser-mcp — Browser automation + bookmark management via FastMCP 3.2."""
-__version__ = "0.2.0"
+"""browser-mcp — Browser automation, bookmark management, and AI browsing workflows."""
+__version__ = "0.3.0"

@@ -1,0 +1,103 @@
+{
+  "profiles": {
+    "default": {
+      "label": "Default morning briefing",
+      "pages": [
+        {
+          "url": "https://news.ycombinator.com",
+          "name": "Hacker News",
+          "task": "top 5 stories by points",
+          "selector": "tr.athing"
+        },
+        {
+          "url": "https://github.com/trending?since=daily",
+          "name": "GitHub Trending",
+          "task": "top 3 trending repos",
+          "selector": "article.Box-row"
+        }
+      ],
+      "integration": {
+        "aiwatcher_hours": 24,
+        "aiwatcher_limit": 5,
+        "arxiv_topics": [],
+        "github_repos": []
+      }
+    },
+    "dev": {
+      "label": "Developer morning",
+      "pages": [
+        {
+          "url": "https://news.ycombinator.com",
+          "name": "Hacker News",
+          "task": "top 5 stories by points",
+          "selector": "tr.athing"
+        },
+        {
+          "url": "https://github.com/trending/python?since=daily",
+          "name": "GitHub Python",
+          "task": "top 3 trending Python repos",
+          "selector": "article.Box-row"
+        },
+        {
+          "url": "https://lobste.rs",
+          "name": "Lobsters",
+          "task": "top 3 stories",
+          "selector": "div.story"
+        }
+      ],
+      "integration": {
+        "aiwatcher_hours": 12,
+        "aiwatcher_limit": 5,
+        "arxiv_topics": ["cs.AI", "cs.SE"],
+        "github_repos": ["sandraschi/browser-mcp", "sandraschi/aiwatcher-mcp"]
+      }
+    },
+    "research": {
+      "label": "Research morning",
+      "pages": [
+        {
+          "url": "https://arxiv.org/list/cs.AI/recent",
+          "name": "arXiv cs.AI",
+          "task": "new papers with > 100 abstract words",
+          "selector": "dl dt"
+        },
+        {
+          "url": "https://www.reddit.com/r/MachineLearning/",
+          "name": "r/MachineLearning",
+          "task": "top 3 posts",
+          "selector": "div.Post"
+        }
+      ],
+      "integration": {
+        "aiwatcher_hours": 48,
+        "aiwatcher_limit": 10,
+        "arxiv_topics": ["cs.AI", "cs.LG", "cs.CV", "stat.ML"],
+        "github_repos": []
+      }
+    },
+    "fleet": {
+      "label": "Fleet health check",
+      "pages": [
+        {
+          "url": "https://github.com/sandraschi?tab=repositories",
+          "name": "Sandra's repos",
+          "task": "any repos with recent activity",
+          "selector": "div.source"
+        }
+      ],
+      "integration": {
+        "aiwatcher_hours": 6,
+        "aiwatcher_limit": 10,
+        "arxiv_topics": [],
+        "github_repos": [
+          "sandraschi/browser-mcp",
+          "sandraschi/aiwatcher-mcp",
+          "sandraschi/qbt-mcp",
+          "sandraschi/freecad-mcp",
+          "sandraschi/godot-mcp",
+          "sandraschi/email-mcp"
+        ]
+      }
+    }
+  }
+}

@@ -1,17 +1,24 @@
 """
-FastMCP 3.2 server — Browser automation and bookmark management for Chrome, Firefox, Edge, Brave.
+FastMCP 3.2 server — Browser automation, bookmark management, and AI browsing workflows.
 
-Tools:
-  browse_page(url)            — fetch page content as markdown-like text
-  click_element(selector)     — click an element on the current page
-  extract_text(selector)      — extract text from an element
-  screenshot()                — take a viewport screenshot, return base64
-  fill_input(selector, text)  — type text into an input field
-  press_key(key)              — press a keyboard key
-  close_browser()             — close the browser and release resources
-  browser_bookmarks(...)      — universal bookmark management (registering via bookmarks.portmanteau)
-  list_browsers()             — detect installed browsers and profiles
-  browse_url_cli(url)         — headless screenshot/dom via CLI (no Playwright)
+Tools (automation):
+  browse_page(url)              — navigate and extract visible text
+  click_element(selector)       — click elements by CSS selector
+  extract_text(selector)        — extract text from any element
+  screenshot()                  — viewport PNG screenshot
+  fill_input(selector, text)    — type into input fields
+  press_key(key)                — press keyboard keys
+  close_browser()               — release Playwright resources
+  list_browsers()               — detect installed browsers and profiles
+  browse_url_cli(url, browser)  — headless CLI mode (no Playwright overhead)
+
+Tools (bookmarks):
+  browser_bookmarks(...)        — 17 operations across Chrome, Firefox, Edge, Brave
+
+Tools (AI workflows):
+  morning_briefing(config)      — configurable daily page routine
+  browse_items(items_json)      — browse a list of links with structured summaries
+  browse_workflow(task)         — multi-step agentic browsing from a natural language task
 """
 
 from __future__ import annotations
@@ -29,11 +36,12 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP(
     "browser-mcp",
     instructions="Browser automation and bookmark management — Playwright + CDP + native bookmarks.",
-    version="0.2.0",
+    version="0.3.0",
 )
 
-# Register bookmark tools by importing the portmanteau module
+# Register bookmark and workflow tools by importing the registration modules
 from browser_mcp.bookmarks import portmanteau  # noqa: F401, E402
+from browser_mcp.workflows import agentic, briefing, link_processor  # noqa: F401, E402
 
 # MCP Bridge: proxy to external MCP servers via MCP_BRIDGE_URLS env var
 _bridge_urls = os.environ.get("MCP_BRIDGE_URLS", "")
@@ -43,65 +51,10 @@ if _bridge_urls:
         if _bu:
             mcp.add_provider(create_proxy(_bu))
 
-# ── Browser lifecycle ─────────────────────────────────────────────────────────
+# ── Browser lifecycle (delegated to browser.py) ──────────────────────────────
 
-_playwright = None
-_browser = None
-_page = None
-_lock: asyncio.Lock | None = None
-
-
-def _get_lock() -> asyncio.Lock:
-    global _lock
-    if _lock is None:
-        _lock = asyncio.Lock()
-    return _lock
-
-
-async def _ensure_page(headless: bool = True):
-    """Start (or reuse) a browser + page. Idempotent."""
-    global _playwright, _browser, _page
-
-    if _page:
-        try:
-            await _page.title()
-            return _page
-        except Exception:
-            await _close()
-
-    from playwright.async_api import async_playwright
-
-    _playwright = await async_playwright().start()
-    _browser = await _playwright.chromium.launch(
-        headless=headless,
-        args=["--disable-blink-features=AutomationControlled"],
-    )
-    context = await _browser.new_context(
-        viewport={"width": 1280, "height": 720},
-        user_agent=(
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/125.0.0.0 Safari/537.36"
-        ),
-    )
-    _page = await context.new_page()
-    return _page
-
-
-async def _close():
-    global _playwright, _browser, _page
-    try:
-        if _browser:
-            await _browser.close()
-        if _playwright:
-            await _playwright.stop()
-    except Exception as exc:
-        logger.warning("browser close error: %s", exc)
-    finally:
-        _playwright = None
-        _browser = None
-        _page = None
-
+from browser_mcp.browser import close as close_browser_engine
+from browser_mcp.browser import ensure_page
 
 # ── Tools ─────────────────────────────────────────────────────────────────────
 
@@ -121,7 +74,7 @@ async def browse_page(url: str, headless: bool | None = None) -> dict:
     headless = headless if headless is not None else cfg.headless
 
     try:
-        page = await _ensure_page(headless=headless)
+        page = await ensure_page(headless=headless)
         resp = await page.goto(url, wait_until="domcontentloaded", timeout=30000)
         await asyncio.sleep(1)
 
@@ -152,7 +105,7 @@ async def click_element(selector: str, headless: bool | None = None) -> dict:
         success, clicked selector, optional error.
     """
     try:
-        page = await _ensure_page(headless=headless)
+        page = await ensure_page(headless=headless)
         await page.click(selector)
         await asyncio.sleep(0.5)
         return {"success": True, "clicked": selector, "url": page.url}
@@ -172,7 +125,7 @@ async def extract_text(selector: str = "body", headless: bool | None = None) -> 
         The text content (first 20K chars), and the URL.
     """
     try:
-        page = await _ensure_page(headless=headless)
+        page = await ensure_page(headless=headless)
         text = await page.inner_text(selector)
         return {"success": True, "text": text[:20000], "url": page.url, "selector": selector}
     except Exception as exc:
@@ -188,7 +141,7 @@ async def screenshot(headless: bool | None = None) -> dict:
         Base64-encoded PNG and the current URL.
     """
     try:
-        page = await _ensure_page(headless=headless)
+        page = await ensure_page(headless=headless)
         png_bytes = await page.screenshot(full_page=False)
         b64 = base64.b64encode(png_bytes).decode()
         return {"success": True, "screenshot_b64": b64, "url": page.url, "format": "png"}
@@ -209,7 +162,7 @@ async def fill_input(selector: str, text: str, headless: bool | None = None) -> 
         success status.
     """
     try:
-        page = await _ensure_page(headless=headless)
+        page = await ensure_page(headless=headless)
         await page.fill(selector, text)
         return {"success": True, "selector": selector}
     except Exception as exc:
@@ -228,7 +181,7 @@ async def press_key(key: str, headless: bool | None = None) -> dict:
         success status.
     """
     try:
-        page = await _ensure_page(headless=headless)
+        page = await ensure_page(headless=headless)
         await page.keyboard.press(key)
         return {"success": True, "key": key}
     except Exception as exc:
@@ -239,7 +192,7 @@ async def press_key(key: str, headless: bool | None = None) -> dict:
 @mcp.tool()
 async def close_browser() -> dict:
     """CLOSE_BROWSER — Close the browser and release resources."""
-    await _close()
+    await close_browser_engine()
     return {"success": True, "message": "Browser closed"}
 
 

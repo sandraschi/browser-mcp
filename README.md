@@ -147,6 +147,37 @@ await browser_bookmarks(
 )
 ```
 
+### Workflow Tools
+
+| Tool | Description |
+|------|-------------|
+| `morning_briefing(config_name)` | Configurable daily page routine with 4 built-in profiles |
+| `browse_items(items_json, task)` | Browse a list of links (from aiwatcher/arxiv/gitops) with summaries |
+| `browse_workflow(task, initial_url)` | Multi-step agentic browsing from natural language task |
+
+**Morning briefing profiles** (defined in `conf/morning_pages.json`):
+
+| Profile | Pages | Integrations |
+|---------|-------|-------------|
+| `default` | HN + GitHub Trending | AIWatcher, GitHub repos |
+| `dev` | HN + Python Trending + Lobsters | AIWatcher, arXiv cs.AI/cs.SE |
+| `research` | arXiv cs.AI + r/MachineLearning | AIWatcher, arXiv cs.AI/LG/CV/ML |
+| `fleet` | Sandra's repos | AIWatcher, 6 fleet repos |
+
+**Chaining with fleet MCP servers:**
+
+```python
+# 1. Get top items from aiwatcher-mcp
+items = await aiwatcher.get_top_items(hours=24, limit=5)
+# 2. Browse them
+await browse_items(items_json=items, task="What's interesting?")
+
+# 1. Get GitHub issues
+issues = await gitops.issue_list(owner="sandraschi", repo="browser-mcp")
+# 2. Browse the issue pages
+await browse_items(items_json=issues)
+```
+
 ### Full Operation List
 
 | Operation | Chrome | Firefox | Edge | Brave |

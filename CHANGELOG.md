@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 (2026-05-23)
+
+- **AI browser workflows**: three new agentic browsing tools
+  - `morning_briefing(config)` — configurable daily page routine (HN, GitHub, arXiv, etc.)
+  - `browse_items(items_json)` — visit a list of links from aiwatcher-mcp, arxiv-mcp, gitops
+  - `browse_workflow(task)` — multi-step agentic browsing from natural language
+- **Configurable morning profiles**: `default`, `dev`, `research`, `fleet` in `conf/morning_pages.json`
+- **Shared browser lifecycle**: extracted to `browser.py` for reuse across tools and workflows
+- **Updated webapp**: workflow-aware dashboard
+
 ## 0.2.0 (2026-05-23)
 
 - **Bookmark management**: 17 operations across Chrome, Firefox, Edge, Brave
