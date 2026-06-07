@@ -1,11 +1,11 @@
-set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+﻿set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
 
 # browser-mcp justfile
 set shell := ["powershell.exe", "-NoProfile", "-Command"]
 
 # Open the interactive recipe dashboard in the browser
 default:
-    @pwsh.exe -NoProfile -ExecutionPolicy Bypass -File ../mcp-central-docs/scripts/just-dashboard.ps1 -Path .
+    @just --list
 
 install:
     uv sync
@@ -22,3 +22,4 @@ test:
 
 check:
     uv run python -c "import browser_mcp; print('OK')"
+
