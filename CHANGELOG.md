@@ -1,3 +1,32 @@
+
+## [Unreleased] — 2026-07-05
+
+### Added
+- **`browser_agent` tool:** Natural-language browsing via browser-use Agent (local Ollama, configurable LLM_BASE_URL/LLM_MODEL)
+- **Packaging docs:** `llms.txt`, `llms-full.txt`, `glama.json` (fleet mandatory)
+- **Zoom hook:** Ctrl+Scroll/Ctrl+/Ctrl -/Ctrl 0 zoom with Tauri WebView + dev browser fallback (`webapp/src/hooks/useZoom.ts`)
+
+### Changed
+- **CORS:** Explicit Tauri origins (tauri://localhost, http://tauri.localhost, https://tauri.localhost) with BROWSER_MCP_TAURI gating
+- **Diagnostics:** `tool_count` now returns live count instead of hardcoded `0`
+- **Dashboard poll:** Flat 10s → exponential backoff (1s, 2s, 4s, 8s, 16s, 30s)
+- **Dependencies:** Added `browser-use>=0.13.0` for agentic browsing
+
+### Added (data-testid)
+- Dashboard KPIs: `kpi-server`, `kpi-port`
+- App root: `dashboard`
+
+---
+
+## [Unreleased] — 2026-06-14
+
+### Added
+- Tauri 2.0 native wrapper with `bundle.resources` + `std::process::Command`
+- PyInstaller frozen backend embedded in NSIS installer
+- CUA-NSIS smoke test (`scripts/cua-smoke.py`, `scripts/cua-nsis-config.json`)
+- `just cua-nsis-test` recipe
+- Tauri CORS: `tauri://localhost` origins for WebView API access
+- `GET /api/v1/diagnostics` endpoint for CUA verification
 # Changelog
 
 ## 0.3.0 (2026-05-23)
@@ -25,3 +54,4 @@
 
 - Initial scaffold: browse_page, click_element, extract_text, screenshot, fill_input, press_key, close_browser
 - Dual transport: stdio (Claude Desktop) + HTTP (port 10780)
+
