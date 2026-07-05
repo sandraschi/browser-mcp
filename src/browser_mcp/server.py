@@ -39,9 +39,11 @@ mcp = FastMCP(
     version="0.3.0",
 )
 
-# Register bookmark and workflow tools by importing the registration modules
+# Register bookmark tools by importing the registration module
 from browser_mcp.bookmarks import portmanteau  # noqa: F401, E402
-from browser_mcp.workflows import agentic, briefing, link_processor  # noqa: F401, E402
+
+# Register browser-use agentic browsing tool
+from browser_mcp.workflows import browser_use_agent  # noqa: F401, E402
 
 # MCP Bridge: proxy to external MCP servers via MCP_BRIDGE_URLS env var
 _bridge_urls = os.environ.get("MCP_BRIDGE_URLS", "")
@@ -289,3 +291,7 @@ async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
         except Exception as e:
             return {"success": False, "error": str(e)}
     return {"success": False, "error": f"Unsupported browser: {browser}"}
+
+
+# Register workflow tools (imported here to avoid circular imports with agentic.py)
+from browser_mcp.workflows import agentic, briefing, link_processor  # noqa: F811, E402
