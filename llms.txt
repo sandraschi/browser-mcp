@@ -1,0 +1,13 @@
+# browser-mcp
+> Browser automation MCP server — Playwright-based page control, cross-browser bookmarks, and agentic browsing workflows.
+
+## Key links
+- [README](./README.md)
+- [llms-full.txt](./llms-full.txt)
+- [Source: src/browser_mcp/](src/browser_mcp/)
+
+## Quick start
+```sh
+uv run browser-mcp                    # stdio (Claude Desktop)
+MCP_PORT=10776 uv run browser-mcp     # HTTP mode
+```

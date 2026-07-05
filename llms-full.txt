@@ -1,0 +1,48 @@
+# browser-mcp — llms-full.txt
+
+Browser automation MCP server. Playwright-based page control (Chrome),
+cross-browser bookmark management (Chrome, Firefox, Edge, Brave),
+and agentic browsing workflows.
+
+## Tools
+
+### Browser control (9 tools — individual)
+- `browse_page(url, headless)` — Navigate to URL, extract visible text
+- `click_element(selector, headless)` — Click by CSS selector
+- `extract_text(selector, headless)` — Extract inner text
+- `screenshot(headless)` — Viewport PNG screenshot as base64
+- `fill_input(selector, text, headless)` — Type into input
+- `press_key(key, headless)` — Press keyboard key
+- `close_browser()` — Release Playwright resources
+- `list_browsers()` — Detect installed browsers + Firefox profiles
+- `browse_url_cli(url, browser)` — Headless CLI mode (no Playwright)
+
+### Bookmark management (portmanteau — 17+ operations)
+- `browser_bookmarks(operation, browser, ...)` — CRUD, search, sync, dedupe, tags, analytics across Chrome/Firefox/Edge/Brave
+
+### Workflows (3 tools)
+- `morning_briefing(config, headless, max_pages)` — Daily browsing routine from JSON config
+- `browse_items(items_json, task, headless, max_items)` — Batch browse from JSON array
+- `browse_workflow(task, initial_url, headless, max_steps)` — Multi-step agentic browsing
+
+## API Endpoints
+- `GET /health` — Server status, version, port
+- `GET /api/v1/diagnostics` — CUA smoke test diagnostics
+- `GET /metrics` — Prometheus metrics
+- `POST /mcp` — FastMCP HTTP transport
+
+## Configuration
+| Env | Default | Description |
+|-----|---------|-------------|
+| `BROWSER_MCP_PORT` | `10776` | HTTP server port |
+| `BROWSER_MCP_TAURI` | — | Set `1` for Tauri desktop |
+| `MCP_BRIDGE_URLS` | — | Comma-separated upstream proxy URLs |
+
+## Transports
+- **stdio**: Default (Claude Desktop)
+- **HTTP**: Set `MCP_PORT` or `BROWSER_MCP_PORT`
+- **MCP bridge**: `MCP_BRIDGE_URLS` for upstream proxies
+
+## NSIS Installer
+`native/` directory with Tauri 2.0 wrapper, PyInstaller backend, CUA smoke test.
+`just build-native` to build, `just cua-nsis-test` to certify.

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "server_name": "browser-mcp",
+  "display_name": "Browser MCP",
+  "description": "Browser automation MCP server — Playwright page control, cross-browser bookmarks, agentic browsing workflows",
+  "categories": ["browser", "automation", "bookmarks"],
+  "tools": 14,
+  "repository": "https://github.com/sandraschi/browser-mcp",
+  "homepage": "https://github.com/sandraschi/browser-mcp",
+  "icon": "https://raw.githubusercontent.com/sandraschi/browser-mcp/master/native/icons/128x128.png"
+}

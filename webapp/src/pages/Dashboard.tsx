@@ -30,12 +30,12 @@ export default function Dashboard() {
       {error && <div className="bg-red-900 p-3 rounded mb-4">{error}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-gray-800 p-4 rounded">
+        <div className="bg-gray-800 p-4 rounded" data-testid="kpi-server">
           <h3 className="text-sm text-gray-400 mb-1">Service</h3>
           <p className="text-xl">{health?.service as string || '...'}</p>
           <p className="text-xs text-gray-500 mt-1">v{health?.version as string || '?'}</p>
         </div>
-        <div className="bg-gray-800 p-4 rounded">
+        <div className="bg-gray-800 p-4 rounded" data-testid="kpi-port">
           <h3 className="text-sm text-gray-400 mb-1">Port</h3>
           <p className="text-xl">{health?.port as string || '...'}</p>
         </div>
