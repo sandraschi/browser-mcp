@@ -5,10 +5,15 @@ from typing import Any
 from .utils import get_places_db_path
 
 
-async def list_bookmarks(profile_name: str | None = None, folder_id: int | None = None, limit: int = 50, offset: int = 0) -> dict[str, Any]:
+async def list_bookmarks(
+    profile_name: str | None = None, folder_id: int | None = None, limit: int = 50, offset: int = 0
+) -> dict[str, Any]:
     places_db = get_places_db_path(profile_name)
     if not places_db or not places_db.exists():
-        return {"status": "error", "message": f"Could not find Firefox bookmarks database for profile: {profile_name or 'default'}"}
+        return {
+            "status": "error",
+            "message": f"Could not find Firefox bookmarks database for profile: {profile_name or 'default'}",
+        }
     try:
         conn = sqlite3.connect(f"file:{places_db}?mode=ro", uri=True)
         conn.row_factory = sqlite3.Row
@@ -41,12 +46,15 @@ async def get_bookmark(bookmark_id: int, profile_name: str | None = None) -> dic
         conn = sqlite3.connect(f"file:{places_db}?mode=ro", uri=True)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT b.id, b.title, p.url, b.dateAdded, b.lastModified, b.parent
             FROM moz_bookmarks b
             JOIN moz_places p ON b.fk = p.id
             WHERE b.id = ?
-        """, (bookmark_id,))
+        """,
+            (bookmark_id,),
+        )
         row = cursor.fetchone()
         conn.close()
         if row:
@@ -56,7 +64,9 @@ async def get_bookmark(bookmark_id: int, profile_name: str | None = None) -> dic
         return {"status": "error", "message": f"Database error: {e}"}
 
 
-async def add_bookmark(url: str, title: str | None = None, profile_name: str | None = None, tags: list[str] | None = None) -> dict[str, Any]:
+async def add_bookmark(
+    url: str, title: str | None = None, profile_name: str | None = None, tags: list[str] | None = None
+) -> dict[str, Any]:
     places_db = get_places_db_path(profile_name)
     if not places_db or not places_db.exists():
         return {"status": "error", "message": "Database not found"}
@@ -64,12 +74,16 @@ async def add_bookmark(url: str, title: str | None = None, profile_name: str | N
         conn = sqlite3.connect(str(places_db))
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO moz_places (url, title, rev_host, visit_count) VALUES (?, ?, ?, 1)",
-                      (url, title or "", "dummy"))
+        cursor.execute(
+            "INSERT INTO moz_places (url, title, rev_host, visit_count) VALUES (?, ?, ?, 1)",
+            (url, title or "", "dummy"),
+        )
         place_id = cursor.lastrowid
         now = int(datetime.now().timestamp() * 1000000)
-        cursor.execute("INSERT INTO moz_bookmarks (type, fk, parent, position, title, dateAdded, lastModified) VALUES (1, ?, (SELECT id FROM moz_bookmarks WHERE type=2 AND title='toolbar' LIMIT 1), 0, ?, ?, ?)",
-                      (place_id, title or "", now, now))
+        cursor.execute(
+            "INSERT INTO moz_bookmarks (type, fk, parent, position, title, dateAdded, lastModified) VALUES (1, ?, (SELECT id FROM moz_bookmarks WHERE type=2 AND title='toolbar' LIMIT 1), 0, ?, ?, ?)",
+            (place_id, title or "", now, now),
+        )
         bookmark_id = cursor.lastrowid
         conn.commit()
         conn.close()

@@ -58,21 +58,27 @@ async def browse_items(
         try:
             result = await browse_page(url=url, headless=headless)
             text = result.get("text", "")
-            results.append({
-                "title": title,
-                "url": url,
-                "page_title": result.get("title", ""),
-                "text_preview": text[:3000],
-                "status": result.get("status", 0),
-                "success": result.get("success", False),
-            })
+            results.append(
+                {
+                    "title": title,
+                    "url": url,
+                    "page_title": result.get("title", ""),
+                    "text_preview": text[:3000],
+                    "status": result.get("status", 0),
+                    "success": result.get("success", False),
+                }
+            )
         except Exception as e:
             errors.append({"title": title, "url": url, "error": str(e)})
 
     await close_browser_engine()
 
     total_text = " ".join(r.get("text_preview", "") for r in results if r.get("success"))
-    summary = f"Processed {len(results)}/{len(items)} items. Total extracted text: {len(total_text)} chars. Task: {task}" if results else "No items processed."
+    summary = (
+        f"Processed {len(results)}/{len(items)} items. Total extracted text: {len(total_text)} chars. Task: {task}"
+        if results
+        else "No items processed."
+    )
 
     return {
         "success": True,

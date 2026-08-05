@@ -1,11 +1,13 @@
 {
-  "$schema": "https://glama.ai/mcp/schemas/server.json",
-  "server_name": "browser-mcp",
-  "display_name": "Browser MCP",
+  "name": "browser-mcp",
+  "version": "0.3.0",
   "description": "Browser automation MCP server — Playwright page control, cross-browser bookmarks, agentic browsing workflows",
-  "categories": ["browser", "automation", "bookmarks"],
-  "tools": 14,
-  "repository": "https://github.com/sandraschi/browser-mcp",
+  "author": "sandraschi",
+  "tags": ["mcp", "fastmcp", "browser", "automation", "bookmarks", "playwright"],
   "homepage": "https://github.com/sandraschi/browser-mcp",
-  "icon": "https://raw.githubusercontent.com/sandraschi/browser-mcp/master/native/icons/128x128.png"
+  "features": {
+    "browser_automation": {"tools": ["browse_page", "click_element", "extract_text", "screenshot", "fill_input", "press_key", "close_browser", "list_browsers", "browse_url_cli"]},
+    "bookmarks": {"tools": ["browser_bookmarks"]},
+    "agentic_workflows": {"tools": ["browser_agent", "morning_briefing", "browse_items", "browse_workflow"]}
+  }
 }

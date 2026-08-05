@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 
 from browser_mcp.browser import close_browser_engine, ensure_page
-from browser_mcp.server import browse_page, extract_text, mcp
+from browser_mcp.server import mcp
 
 logger = logging.getLogger(__name__)
 
@@ -41,22 +41,36 @@ async def browse_workflow(
         page = await ensure_page(headless=headless)
 
         if initial_url:
+            from browser_mcp.server import browse_page
+
             result = await browse_page(url=initial_url, headless=headless)
-            steps.append({"step": 1, "action": "navigate", "url": initial_url, "title": result.get("title", ""), "text_preview": result.get("text", "")[:2000]})
+            steps.append(
+                {
+                    "step": 1,
+                    "action": "navigate",
+                    "url": initial_url,
+                    "title": result.get("title", ""),
+                    "text_preview": result.get("text", "")[:2000],
+                }
+            )
 
         for step_num in range(2, max_steps + 1):
-            current_url = page.url if hasattr(page, 'url') else ""
-            current_title = await page.title() if hasattr(page, 'title') else ""
+            current_url = page.url if hasattr(page, "url") else ""
+            current_title = await page.title() if hasattr(page, "title") else ""
+
+            from browser_mcp.server import extract_text
 
             text = await extract_text(selector="body", headless=headless)
             body_text = text.get("text", "")[:3000]
 
-            steps.append({
-                "step": step_num,
-                "url": current_url,
-                "title": current_title,
-                "text_preview": body_text,
-            })
+            steps.append(
+                {
+                    "step": step_num,
+                    "url": current_url,
+                    "title": current_title,
+                    "text_preview": body_text,
+                }
+            )
 
             if step_num >= 5:
                 break

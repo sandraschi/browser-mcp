@@ -1,4 +1,18 @@
 
+## [Unreleased] — 2026-07-13
+
+### Fixed
+- Security: CORS `allow_origin_regex` now unconditional (was gated on `BROWSER_MCP_TAURI`) — covers Tailscale, LAN, CGNAT per `CORS_STANDARD.md`
+- Security: Added `allow_credentials=True` to CORS (was missing)
+- Version: `pyproject.toml` synced to `0.3.0` (was `0.1.0`), `tauri.conf.json` synced
+- `glama.json`: fixed schema (was using old `server_name` format, missing version)
+
+### Added
+- `.env.example` with template env vars
+- `.cursorrules` for session context injection
+- Added missing CORS origins for ports 10780/10781 (backend/frontend)
+- `E501` added to ruff ignore (pre-existing bookmarks code style)
+
 ## [Unreleased] — 2026-07-05
 
 ### Added

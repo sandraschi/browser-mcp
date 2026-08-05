@@ -57,7 +57,11 @@ def read_chromium_bookmarks(path: Path | None) -> dict[str, Any]:
     except json.JSONDecodeError as e:
         return {"status": "error", "error_code": "CHROMIUM_INVALID_JSON", "error": f"json_decode_failed: {e!s}"}
     except Exception as e:
-        return {"status": "error", "error_code": "CHROMIUM_READ_FAILED", "error": f"read_failed: {type(e).__name__}: {e!s}"}
+        return {
+            "status": "error",
+            "error_code": "CHROMIUM_READ_FAILED",
+            "error": f"read_failed: {type(e).__name__}: {e!s}",
+        }
 
 
 def _walk_ids(node: dict[str, Any], ids: list[int]) -> None:
@@ -80,7 +84,9 @@ def _next_id(roots: dict[str, Any]) -> str:
     return str(next_int)
 
 
-def write_chromium_bookmark(path: Path | None, title: str, url: str, folder: str | None = None, allow_duplicates: bool = False) -> dict[str, Any]:
+def write_chromium_bookmark(
+    path: Path | None, title: str, url: str, folder: str | None = None, allow_duplicates: bool = False
+) -> dict[str, Any]:
     if not path or not path.exists():
         return {"status": "error", "message": "Bookmarks file not found"}
     try:
@@ -101,7 +107,11 @@ def write_chromium_bookmark(path: Path | None, title: str, url: str, folder: str
             if found is not None:
                 target = found
         if not isinstance(target, dict):
-            return {"status": "error", "error_code": "CHROMIUM_INVALID_STRUCTURE", "error": "invalid_bookmarks_file_structure"}
+            return {
+                "status": "error",
+                "error_code": "CHROMIUM_INVALID_STRUCTURE",
+                "error": "invalid_bookmarks_file_structure",
+            }
         if not allow_duplicates:
             existing = read_chromium_bookmarks(path).get("bookmarks", [])
             if any(b.get("url") == url for b in existing):
@@ -115,13 +125,25 @@ def write_chromium_bookmark(path: Path | None, title: str, url: str, folder: str
     except json.JSONDecodeError as e:
         return {"status": "error", "error_code": "CHROMIUM_INVALID_JSON", "error": f"json_decode_failed: {e!s}"}
     except Exception as e:
-        return {"status": "error", "error_code": "CHROMIUM_WRITE_FAILED", "error": f"write_failed: {type(e).__name__}: {e!s}"}
+        return {
+            "status": "error",
+            "error_code": "CHROMIUM_WRITE_FAILED",
+            "error": f"write_failed: {type(e).__name__}: {e!s}",
+        }
 
 
-def _find_node_and_parent_by(node: dict[str, Any], *, match_id: str | None = None, match_url: str | None = None, parent: dict[str, Any] | None = None) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+def _find_node_and_parent_by(
+    node: dict[str, Any],
+    *,
+    match_id: str | None = None,
+    match_url: str | None = None,
+    parent: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     node_type = node.get("type")
     if node_type == "url":
-        if (match_id is not None and str(node.get("id")) == str(match_id)) or (match_url is not None and node.get("url") == match_url):
+        if (match_id is not None and str(node.get("id")) == str(match_id)) or (
+            match_url is not None and node.get("url") == match_url
+        ):
             return node, parent
         return None, None
     if node_type == "folder":
@@ -152,7 +174,17 @@ def _ensure_folder_path(roots: dict[str, Any], folder_path: str) -> dict[str, An
     return current
 
 
-def edit_chromium_bookmark(path: Path | None, *, id: str | None = None, url: str | None = None, new_title: str | None = None, new_folder: str | None = None, allow_duplicates: bool = False, create_folders: bool = True, dry_run: bool = False) -> dict[str, Any]:
+def edit_chromium_bookmark(
+    path: Path | None,
+    *,
+    id: str | None = None,
+    url: str | None = None,
+    new_title: str | None = None,
+    new_folder: str | None = None,
+    allow_duplicates: bool = False,
+    create_folders: bool = True,
+    dry_run: bool = False,
+) -> dict[str, Any]:
     if not path or not path.exists():
         return {"status": "error", "message": "Bookmarks file not found"}
     if id is None and url is None:
@@ -195,14 +227,23 @@ def edit_chromium_bookmark(path: Path | None, *, id: str | None = None, url: str
         if dry_run:
             return {"status": "planned", "action": "edit", "edited": bool(new_title), "moved": bool(new_folder)}
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-        return {"status": "success", "bookmark": {"id": str(target_node.get("id")), "title": target_node.get("name"), "url": target_node.get("url")}}
+        return {
+            "status": "success",
+            "bookmark": {
+                "id": str(target_node.get("id")),
+                "title": target_node.get("name"),
+                "url": target_node.get("url"),
+            },
+        }
     except PermissionError as e:
         return {"status": "error", "message": f"Failed to write bookmarks: {e}"}
     except Exception as e:
         return {"status": "error", "message": f"Failed to edit bookmark: {e}"}
 
 
-def delete_chromium_bookmark(path: Path | None, *, id: str | None = None, url: str | None = None, dry_run: bool = False) -> dict[str, Any]:
+def delete_chromium_bookmark(
+    path: Path | None, *, id: str | None = None, url: str | None = None, dry_run: bool = False
+) -> dict[str, Any]:
     if not path or not path.exists():
         return {"status": "error", "message": "Bookmarks file not found"}
     if id is None and url is None:
@@ -245,13 +286,34 @@ async def add_chromium_bookmark(browser: str, title: str, url: str, folder: str 
     return write_chromium_bookmark(path, title, url, folder)
 
 
-async def edit_chromium_bookmark_entry(browser: str, *, id: str | None = None, url: str | None = None, new_title: str | None = None, new_folder: str | None = None, allow_duplicates: bool = False, create_folders: bool = True, dry_run: bool = False) -> dict[str, Any]:
+async def edit_chromium_bookmark_entry(
+    browser: str,
+    *,
+    id: str | None = None,
+    url: str | None = None,
+    new_title: str | None = None,
+    new_folder: str | None = None,
+    allow_duplicates: bool = False,
+    create_folders: bool = True,
+    dry_run: bool = False,
+) -> dict[str, Any]:
     paths = {"chrome": CHROME_BOOKMARK_PATHS, "edge": EDGE_BOOKMARK_PATHS, "brave": BRAVE_BOOKMARK_PATHS}
     path = _find_first_existing(paths.get(browser, CHROME_BOOKMARK_PATHS))
-    return edit_chromium_bookmark(path, id=id, url=url, new_title=new_title, new_folder=new_folder, allow_duplicates=allow_duplicates, create_folders=create_folders, dry_run=dry_run)
+    return edit_chromium_bookmark(
+        path,
+        id=id,
+        url=url,
+        new_title=new_title,
+        new_folder=new_folder,
+        allow_duplicates=allow_duplicates,
+        create_folders=create_folders,
+        dry_run=dry_run,
+    )
 
 
-async def delete_chromium_bookmark_entry(browser: str, *, id: str | None = None, url: str | None = None, dry_run: bool = False) -> dict[str, Any]:
+async def delete_chromium_bookmark_entry(
+    browser: str, *, id: str | None = None, url: str | None = None, dry_run: bool = False
+) -> dict[str, Any]:
     paths = {"chrome": CHROME_BOOKMARK_PATHS, "edge": EDGE_BOOKMARK_PATHS, "brave": BRAVE_BOOKMARK_PATHS}
     path = _find_first_existing(paths.get(browser, CHROME_BOOKMARK_PATHS))
     return delete_chromium_bookmark(path, id=id, url=url, dry_run=dry_run)

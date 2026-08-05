@@ -8,6 +8,7 @@ from .utils import get_profile_directory
 
 logger = logging.getLogger(__name__)
 
+
 class FirefoxDatabaseUnlocker:
     @staticmethod
     def copy_database_to_temp(db_path: Path) -> Path | None:
@@ -88,6 +89,7 @@ class FirefoxDatabaseUnlocker:
         except sqlite3.Error as e:
             logger.debug(f"Extended timeout also failed: {e}")
         return None, "All brute force methods failed - database is locked"
+
 
 def get_default_profile_path() -> Path | None:
     return get_profile_directory()

@@ -60,3 +60,6 @@ async def close():
         _playwright = None
         _browser = None
         _page = None
+
+
+close_browser_engine = close  # alias for workflows that expect this name

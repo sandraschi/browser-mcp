@@ -54,5 +54,8 @@ class BookmarkManager:
     async def add_bookmark(self, url: str, title: str | None, tags: list[str] | None = None) -> int:
         db = self._get_db_connection()
         from .links import add_bookmark as add_link
-        result = await add_link(url=url, title=title, profile_name=str(self.profile_path) if self.profile_path else None)
+
+        result = await add_link(
+            url=url, title=title, profile_name=str(self.profile_path) if self.profile_path else None
+        )
         return result.get("bookmark_id", 0)

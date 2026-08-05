@@ -23,7 +23,9 @@ LLM_BASE = (os.environ.get("LLM_BASE_URL") or "").rstrip("/") or LLM_DEFAULT
 
 @mcp.tool(version="0.1.0", annotations={"readOnlyHint": False})
 async def browser_agent(
-    task: Annotated[str, Field(description="Natural language task. Example: 'Find the price of the RTX 5090 on Amazon'.")],
+    task: Annotated[
+        str, Field(description="Natural language task. Example: 'Find the price of the RTX 5090 on Amazon'.")
+    ],
     headless: Annotated[bool, Field(description="Run browser headless. Set False to watch.")] = True,
     max_steps: Annotated[int, Field(description="Max browser steps before giving up.", ge=1, le=50)] = 20,
 ) -> ToolResult:
@@ -53,9 +55,11 @@ async def browser_agent(
 
     try:
         from browser_use import ChatBrowserUse
+
         llm = ChatBrowserUse(model=f"openai/{LLM_MODEL}", base_url=LLM_BASE)
     except Exception:
         import openai
+
         client = openai.AsyncOpenAI(base_url=f"{LLM_BASE}/v1", api_key="not-needed")
         llm = client
 
@@ -74,7 +78,11 @@ async def browser_agent(
 
     try:
         history = await agent.run()
-        final = history.final_result() if hasattr(history, "final_result") else str(history.urls[-1] if history.urls else None)
+        final = (
+            history.final_result()
+            if hasattr(history, "final_result")
+            else str(history.urls[-1] if history.urls else None)
+        )
         return ToolResult(
             content={
                 "success": True,

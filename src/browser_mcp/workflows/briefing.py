@@ -59,15 +59,17 @@ async def morning_briefing(
         try:
             page = await ensure_page(headless=headless)
             result = await browse_page(url=page_cfg["url"], headless=headless)
-            results.append({
-                "name": page_cfg["name"],
-                "url": page_cfg["url"],
-                "task": page_cfg.get("task", ""),
-                "title": result.get("title", ""),
-                "text_preview": result.get("text", "")[:5000],
-                "status": result.get("status", 0),
-                "success": result.get("success", False),
-            })
+            results.append(
+                {
+                    "name": page_cfg["name"],
+                    "url": page_cfg["url"],
+                    "task": page_cfg.get("task", ""),
+                    "title": result.get("title", ""),
+                    "text_preview": result.get("text", "")[:5000],
+                    "status": result.get("status", 0),
+                    "success": result.get("success", False),
+                }
+            )
         except Exception as e:
             errors.append({"url": page_cfg["url"], "name": page_cfg["name"], "error": str(e)})
 

@@ -12,6 +12,7 @@ def get_platform() -> str:
             return "darwin"
     return "linux"
 
+
 def get_profiles_ini_path() -> Path | None:
     platform = get_platform()
     if platform == "windows":
@@ -20,6 +21,7 @@ def get_profiles_ini_path() -> Path | None:
         return Path.home() / "Library" / "Application Support" / "Firefox" / "profiles.ini"
     else:
         return Path.home() / ".mozilla" / "firefox" / "profiles.ini"
+
 
 def parse_profiles_ini() -> dict[str, dict[str, Any]]:
     profiles_ini = get_profiles_ini_path()
@@ -34,6 +36,7 @@ def parse_profiles_ini() -> dict[str, dict[str, Any]]:
             if "Path" in profile:
                 profiles[profile.get("Name", profile["Path"])] = profile
     return profiles
+
 
 def get_profile_directory(profile_name: str | None = None) -> Path | None:
     profiles = parse_profiles_ini()
@@ -54,6 +57,7 @@ def get_profile_directory(profile_name: str | None = None) -> Path | None:
         return base_dir / profile["Path"]
     else:
         return Path(profile["Path"])
+
 
 def get_places_db_path(profile_name: str | None = None) -> Path | None:
     profile_dir = get_profile_directory(profile_name)

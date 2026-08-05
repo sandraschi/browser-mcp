@@ -1,0 +1,35 @@
+{
+  "manifest_version": "0.2",
+  "name": "browser-mcp",
+  "version": "0.1.0",
+  "description": "FastMCP 3.2 server for Playwright browser automation — browse, click, screenshot, extract",
+  "author": { "name": "Sandra Schipal" },
+  "server": {
+    "type": "python",
+    "entry_point": "run_server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run","--directory","${PWD}","run_server.py"],
+      "env": {
+        "PYTHONPATH": "${PWD}/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "tools": [
+    { "name": "health", "description": "health" },
+    { "name": "browse_page", "description": "browse_page" },
+    { "name": "click_element", "description": "click_element" },
+    { "name": "extract_text", "description": "extract_text" },
+    { "name": "screenshot", "description": "screenshot" },
+    { "name": "fill_input", "description": "fill_input" },
+    { "name": "press_key", "description": "press_key" },
+    { "name": "close_browser", "description": "close_browser" },
+    { "name": "list_browsers", "description": "list_browsers" },
+    { "name": "browse_url_cli", "description": "browse_url_cli" },
+    { "name": "browser_bookmarks", "description": "browser_bookmarks" },
+    { "name": "browse_workflow", "description": "browse_workflow" },
+    { "name": "morning_briefing", "description": "morning_briefing" },
+    { "name": "browse_items", "description": "browse_items" }
+  ]
+}

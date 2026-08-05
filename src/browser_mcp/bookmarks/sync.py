@@ -33,7 +33,9 @@ def _normalize(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-async def sync_bookmarks(source_browser: str, target_browser: str, dry_run: bool = False, limit: int = 100) -> dict[str, Any]:
+async def sync_bookmarks(
+    source_browser: str, target_browser: str, dry_run: bool = False, limit: int = 100
+) -> dict[str, Any]:
     try:
         read_fn = _read(source_browser)
         write_fn = _write(target_browser)
@@ -45,7 +47,12 @@ async def sync_bookmarks(source_browser: str, target_browser: str, dry_run: bool
             items = result.get("bookmarks", [])
         normalized = _normalize(items)[:limit]
         if dry_run:
-            return {"success": True, "message": f"Would sync {len(normalized)} bookmarks from {source_browser} to {target_browser}", "dry_run": True, "count": len(normalized)}
+            return {
+                "success": True,
+                "message": f"Would sync {len(normalized)} bookmarks from {source_browser} to {target_browser}",
+                "dry_run": True,
+                "count": len(normalized),
+            }
         synced = 0
         for item in normalized:
             if target_browser in ("chrome", "edge", "brave"):

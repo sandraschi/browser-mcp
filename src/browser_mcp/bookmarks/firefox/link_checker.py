@@ -35,7 +35,11 @@ class LinkChecker:
                 try:
                     async with session.head(bm["url"], allow_redirects=True, timeout=10) as resp:
                         if resp.status >= 400:
-                            broken.append({"bookmark_id": bm["id"], "title": bm["title"], "url": bm["url"], "status": resp.status})
+                            broken.append(
+                                {"bookmark_id": bm["id"], "title": bm["title"], "url": bm["url"], "status": resp.status}
+                            )
                 except Exception:
-                    broken.append({"bookmark_id": bm["id"], "title": bm["title"], "url": bm["url"], "error": "Connection failed"})
+                    broken.append(
+                        {"bookmark_id": bm["id"], "title": bm["title"], "url": bm["url"], "error": "Connection failed"}
+                    )
         return {"broken_links": broken, "count": len(broken)}

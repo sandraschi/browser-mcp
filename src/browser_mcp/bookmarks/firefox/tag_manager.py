@@ -27,7 +27,9 @@ class TagManager:
         for i, t1 in enumerate(tags):
             for j, t2 in enumerate(tags):
                 if i < j:
-                    score = len(set(t1["tag"].lower()) & set(t2["tag"].lower())) / max(len(set(t1["tag"].lower()) | set(t2["tag"].lower())), 1)
+                    score = len(set(t1["tag"].lower()) & set(t2["tag"].lower())) / max(
+                        len(set(t1["tag"].lower()) | set(t2["tag"].lower())), 1
+                    )
                     if score > 0.5:
                         similar.append({"tag_a": t1["tag"], "tag_b": t2["tag"], "similarity": round(score, 2)})
         return similar

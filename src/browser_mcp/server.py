@@ -240,6 +240,7 @@ async def list_browsers() -> dict:
     # Firefox profiles
     try:
         from .bookmarks.firefox.utils import parse_profiles_ini
+
         profiles = parse_profiles_ini()
         if profiles:
             browsers["firefox"]["profiles"] = list(profiles.keys())
@@ -270,7 +271,9 @@ async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
         try:
             result = subprocess.run(
                 ["chrome", "--headless", "--dump-dom", url],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             text = result.stdout[:20000] if result.stdout else (result.stderr or "No output")
             return {"success": True, "browser": "chrome", "url": url, "text": text}
@@ -283,7 +286,9 @@ async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
             tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
             result = subprocess.run(
                 ["firefox", "--headless", "--screenshot", tmp.name, url],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             return {"success": True, "browser": "firefox", "url": url, "screenshot": tmp.name}
         except FileNotFoundError:
@@ -294,4 +299,3 @@ async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
 
 
 # Register workflow tools (imported here to avoid circular imports with agentic.py)
-from browser_mcp.workflows import agentic, briefing, link_processor  # noqa: F811, E402

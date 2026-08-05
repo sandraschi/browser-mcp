@@ -9,7 +9,8 @@ async def find_old_bookmarks(age_days: int = 365, profile_path: str | None = Non
     db = FirefoxDB(Path(profile_path) if profile_path else None)
     cutoff_date = datetime.now() - timedelta(days=age_days)
     cutoff_timestamp = int(cutoff_date.timestamp() * 1000000)
-    cursor = db.execute("""
+    cursor = db.execute(
+        """
         SELECT b.id, b.title, p.url, 
                b.dateAdded / 1000000 as created_ts,
                b.lastModified / 1000000 as modified_ts,
@@ -19,7 +20,9 @@ async def find_old_bookmarks(age_days: int = 365, profile_path: str | None = Non
         LEFT JOIN moz_places p ON b.fk = p.id
         WHERE b.type = 1 AND b.dateAdded < ?
         ORDER BY b.dateAdded ASC
-    """, (cutoff_timestamp,))
+    """,
+        (cutoff_timestamp,),
+    )
     old_bookmarks = []
     for row in cursor.fetchall():
         bm = dict(row)
@@ -36,7 +39,8 @@ async def find_forgotten_bookmarks(days_unvisited: int = 365, profile_path: str 
     db = FirefoxDB(Path(profile_path) if profile_path else None)
     cutoff_date = datetime.now() - timedelta(days=days_unvisited)
     cutoff_timestamp = int(cutoff_date.timestamp() * 1000000)
-    cursor = db.execute("""
+    cursor = db.execute(
+        """
         SELECT b.id, b.title, p.url, 
                p.last_visit_date / 1000000 as last_visit_ts,
                (strftime('%s', 'now') - p.last_visit_date/1000000)/86400 as days_since_visit
@@ -44,7 +48,9 @@ async def find_forgotten_bookmarks(days_unvisited: int = 365, profile_path: str 
         JOIN moz_bookmarks b ON b.fk = p.id
         WHERE b.type = 1 AND p.last_visit_date > 0 AND p.last_visit_date < ?
         ORDER BY p.last_visit_date ASC
-    """, (cutoff_timestamp,))
+    """,
+        (cutoff_timestamp,),
+    )
     stale = []
     for row in cursor.fetchall():
         bm = dict(row)
