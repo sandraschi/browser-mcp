@@ -10,7 +10,7 @@ export default function Bookmarks() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/health', {
+      const res = await fetch('/mcp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -72,7 +72,7 @@ export default function Bookmarks() {
               <a href={bm.url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline font-medium">
                 {bm.title || bm.name || bm.url}
               </a>
-              <p className="text-xs text-gray-500 truncate mt-0.5">{bm.url}</p>
+              <p className="text-sm text-zinc-400 truncate mt-0.5">{bm.url}</p>
             </div>
           ))}
         </div>

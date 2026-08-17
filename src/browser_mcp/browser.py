@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-_playwright = None
-_browser = None
-_page = None
+_playwright: Any = None
+_browser: Any = None
+_page: Any = None
 _lock: asyncio.Lock | None = None
 
 
@@ -18,7 +19,7 @@ def _get_lock() -> asyncio.Lock:
     return _lock
 
 
-async def ensure_page(headless: bool = True):
+async def ensure_page(headless: bool = True) -> Any:
     global _playwright, _browser, _page
 
     if _page:

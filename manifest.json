@@ -1,0 +1,37 @@
+{
+  "manifest_version": "0.2",
+  "name": "browser-mcp",
+  "version": "0.3.0",
+  "description": "FastMCP 3.4 server for Playwright browser automation - browse, click, screenshot, extract, plus cross-browser bookmarks and agentic workflows",
+  "author": { "name": "Sandra Schipal" },
+  "server": {
+    "type": "python",
+    "entry_point": "run_server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${PWD}", "run_server.py"],
+      "env": {
+        "PYTHONPATH": "${PWD}/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "tools": [
+    { "name": "browse_page", "description": "Navigate to a URL and extract visible text" },
+    { "name": "click_element", "description": "Click an element by CSS selector" },
+    { "name": "extract_text", "description": "Extract inner text from a CSS selector" },
+    { "name": "screenshot", "description": "Take a PNG screenshot of the viewport" },
+    { "name": "fill_input", "description": "Type text into an input field" },
+    { "name": "press_key", "description": "Press a keyboard key" },
+    { "name": "close_browser", "description": "Close the browser and release resources" },
+    { "name": "list_browsers", "description": "Detect installed browsers and profiles" },
+    { "name": "browse_url_cli", "description": "Headless CLI navigation (no Playwright)" },
+    { "name": "browser_bookmarks", "description": "Bookmark CRUD/search/sync across Chrome, Firefox, Edge, Brave" },
+    { "name": "browser_agent", "description": "Agentic browsing with an LLM via browser-use" },
+    { "name": "morning_briefing", "description": "Configurable daily page routine" },
+    { "name": "browse_items", "description": "Browse a list of links with structured summaries" },
+    { "name": "browse_workflow", "description": "Multi-step agentic browsing from a task" },
+    { "name": "browser_help", "description": "Server documentation and tool index" },
+    { "name": "browser_shutdown", "description": "Gracefully shut down the server" }
+  ]
+}

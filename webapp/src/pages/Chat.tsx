@@ -34,7 +34,7 @@ export default function Chat() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs]);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:10776/mcp', {
+    fetch('http://127.0.0.1:10780/mcp', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
     }).then(r => r.json()).then(d => {
@@ -60,7 +60,7 @@ export default function Chat() {
     const sel = PERSONALITIES.find(p => p.id === personality);
     const personalityPrompt = sel?.prompt ? `\n\nRole:\n${sel.prompt}` : '';
     try {
-      const r = await fetch('http://127.0.0.1:10776/api/llm/chat', {
+      const r = await fetch('http://127.0.0.1:10780/api/llm/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [{ role: 'system', content: `You are a browser automation assistant.${skillCtx}${personalityPrompt}` }, ...updated],
@@ -85,10 +85,10 @@ export default function Chat() {
         <input type="text" value={model} onChange={e => { setModel(e.target.value); try { localStorage.setItem('browser-mcp-default-model', e.target.value); } catch {} }}
           placeholder="Model (e.g. gemma4:12b)" className="px-3 py-1.5 rounded bg-zinc-800 border border-zinc-600 text-zinc-100 text-sm w-36 placeholder-zinc-500" />
         <select value={personality} onChange={e => handlePersonalityChange(e.target.value)} data-testid="personality-select"
-          className="px-2 py-1.5 rounded bg-zinc-800 border border-zinc-600 text-zinc-100 text-xs focus:outline-none">
+          className="px-2 py-1.5 rounded bg-zinc-800 border border-zinc-600 text-zinc-100 text-sm focus:outline-none">
           {PERSONALITIES.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
         </select>
-        <span className="text-[10px] text-zinc-500 bg-zinc-800/50 px-1.5 py-0.5 rounded font-mono">skill:browser</span>
+        <span className="text-xs text-zinc-400 bg-zinc-800/50 px-1.5 py-0.5 rounded font-mono">skill:browser</span>
         <div className="flex-1" />
         <button type="button" onClick={() => { setMsgs([]); try { localStorage.removeItem(STORAGE_KEY); } catch {} }} disabled={msgs.length === 0}
           className="p-1.5 rounded text-zinc-500 hover:text-red-400 disabled:opacity-30" data-testid="chat-clear" title="Clear"><Trash2 size={16} /></button>
@@ -101,10 +101,10 @@ export default function Chat() {
         <div className="flex flex-wrap gap-1.5 mb-2" data-testid="example-prompts">
           {EXAMPLE_PROMPTS.map(group => (
             <div key={group.group} className="flex items-center gap-1 mr-2">
-              <span className="text-[10px] text-zinc-500 mr-1">{group.group}:</span>
+              <span className="text-xs text-zinc-400 mr-1">{group.group}:</span>
               {group.items.map(p => (
                 <button key={p} type="button" onClick={() => { setInput(p); }}
-                  className="px-2 py-0.5 rounded text-[10px] bg-zinc-800 text-zinc-400 hover:bg-zinc-700 transition-colors border border-zinc-700/30">
+                  className="px-2 py-0.5 rounded text-xs bg-zinc-800 text-zinc-400 hover:bg-zinc-700 transition-colors border border-zinc-700/30">
                   {p}
                 </button>
               ))}

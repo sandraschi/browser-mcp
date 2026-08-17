@@ -11,7 +11,7 @@ async def find_old_bookmarks(age_days: int = 365, profile_path: str | None = Non
     cutoff_timestamp = int(cutoff_date.timestamp() * 1000000)
     cursor = db.execute(
         """
-        SELECT b.id, b.title, p.url, 
+        SELECT b.id, b.title, p.url,
                b.dateAdded / 1000000 as created_ts,
                b.lastModified / 1000000 as modified_ts,
                (strftime('%s', 'now') - b.dateAdded/1000000)/86400 as age_days,
@@ -41,7 +41,7 @@ async def find_forgotten_bookmarks(days_unvisited: int = 365, profile_path: str 
     cutoff_timestamp = int(cutoff_date.timestamp() * 1000000)
     cursor = db.execute(
         """
-        SELECT b.id, b.title, p.url, 
+        SELECT b.id, b.title, p.url,
                p.last_visit_date / 1000000 as last_visit_ts,
                (strftime('%s', 'now') - p.last_visit_date/1000000)/86400 as days_since_visit
         FROM moz_places p
@@ -65,7 +65,7 @@ async def get_bookmark_stats(profile_path: str | None = None) -> dict[str, Any]:
     total = db.execute("SELECT COUNT(*) as count FROM moz_bookmarks WHERE type = 1").fetchone()["count"]
     age_cursor = db.execute("""
         SELECT COUNT(*) as count,
-            CASE 
+            CASE
                 WHEN (strftime('%s', 'now') - p.last_visit_date/1000000) < 7 THEN '1_week'
                 WHEN (strftime('%s', 'now') - p.last_visit_date/1000000) < 30 THEN '1_month'
                 WHEN (strftime('%s', 'now') - p.last_visit_date/1000000) < 90 THEN '3_months'

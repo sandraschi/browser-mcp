@@ -25,9 +25,10 @@ class FirefoxDB:
             return False
 
     def execute(self, query: str, params: tuple = ()) -> Any:
-        if not self.conn:
+        if self.conn is None:
             if not self.connect():
                 raise ConnectionError("Failed to connect to database")
+        assert self.conn is not None
         try:
             cursor = self.conn.cursor()
             cursor.execute(query, params)

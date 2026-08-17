@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Topbar from './components/layout/Topbar';
 import Sidebar from './components/layout/Sidebar';
@@ -12,12 +12,24 @@ import Chat from './pages/Chat';
 import Skills from './pages/Skills';
 import ApiDocs from './pages/ApiDocs';
 import Apps from './pages/Apps';
+import Settings from './pages/Settings';
+import Help from './pages/Help';
 
 export default function App() {
   useZoom();
   const [sidebar, setSidebar] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!e.ctrlKey || e.altKey) return;
+      if (e.key === 'l' || e.key === 'L') { e.preventDefault(); setShowLogs(v => !v); }
+      else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); setShowHelp(v => !v); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   return (
     <div className="h-screen flex flex-col bg-zinc-950" data-testid="dashboard">
@@ -31,6 +43,8 @@ export default function App() {
             <Route path="/tools" element={<Tools />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/skills" element={<Skills />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/help" element={<Help />} />
             <Route path="/api-docs" element={<ApiDocs />} />
             <Route path="/apps" element={<Apps />} />
           </Routes>

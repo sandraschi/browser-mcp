@@ -24,6 +24,17 @@ desktop.ini
 # Dashboard cache
 _dashboard/
 
+# MCPB staging + build artifacts
+mcpb/
+*.mcpb
+
+# Batch-edit safety backups
+*.bak
+*.bak.*
+
+# Fleet audit reports (regenerable snapshots)
+reports/
+
 # IDE
 .vscode/
 .cursor/

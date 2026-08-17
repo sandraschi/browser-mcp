@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "text",
+            "text": "## Session Context (Browser MCP)\n\nYou have access to browser automation tools: Playwright page control, cross-browser bookmarks, and agentic browsing workflows.\n\n**Before starting work:**\n1. Check installed browsers: `list_browsers()`\n2. Open a page: `browse_page(url=\"https://example.com\")`\n3. List bookmarks: `browser_bookmarks(browser=\"firefox\", operation=\"list_bookmarks\")`\n\n**At end of work:**\n- Close the browser: `close_browser()`"
+          }
+        ]
+      }
+    ]
+  }
+}

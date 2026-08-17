@@ -1,0 +1,6 @@
+{
+  "name": "browser-mcp",
+  "version": "0.3.0",
+  "description": "Browser automation and bookmark management over MCP",
+  "hooks": "../hooks/hooks.json"
+}

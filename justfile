@@ -24,6 +24,17 @@ test:
 check:
     uv run python -c "import browser_mcp; print('OK')"
 
+# Start the backend in HTTP mode (REST + MCP on 10780)
+serve:
+    uv run python -m browser_mcp --serve
+
+# Run all verification gates (lint, format, types, tests)
+certify:
+    uv run ruff check src/ tests/
+    uv run ruff format src/ tests/ --check
+    uv run pyright src/
+    uv run pytest tests/ -q
+
 # Build the Tauri NSIS desktop installer (full pipeline: frontend -> Rust -> NSIS)
 build-native:
 	$env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"

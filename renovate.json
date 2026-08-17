@@ -1,0 +1,14 @@
+repos:
+  - defaultBranch: main
+stabilityDays: 3
+prConcurrentLimit: 3
+schedule:
+  timezone: Europe/Vienna
+  schedule: "before 6am on Monday"
+packageRules:
+  - matchUpdateTypes: ["major"]
+    groupName: major updates
+    automerge: false
+  - matchUpdateTypes: ["minor", "patch"]
+    automerge: true
+platformAutomerge: true

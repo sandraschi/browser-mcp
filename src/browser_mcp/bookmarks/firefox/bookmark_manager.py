@@ -34,7 +34,7 @@ class BookmarkManager:
         if folder_id is not None:
             query += " AND b.parent = ?"
             params.append(folder_id)
-        cursor = db.execute(query, params)
+        cursor = db.execute(query, tuple(params))
         return [dict(row) for row in cursor.fetchall()]
 
     async def list_bookmarks(self, folder_id: int | None = None) -> list[dict[str, Any]]:
@@ -52,7 +52,6 @@ class BookmarkManager:
         return dict(row) if row else None
 
     async def add_bookmark(self, url: str, title: str | None, tags: list[str] | None = None) -> int:
-        db = self._get_db_connection()
         from .links import add_bookmark as add_link
 
         result = await add_link(

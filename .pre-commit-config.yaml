@@ -1,0 +1,15 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: biome
+        name: biome (js/ts)
+        entry: powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/pre-commit-biome.ps1
+        language: system
+        files: ^webapp/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false

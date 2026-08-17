@@ -7,7 +7,7 @@ export default function Tools() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('http://127.0.0.1:10776/mcp', {
+    fetch('http://127.0.0.1:10780/mcp', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
     }).then(r => r.json()).then(d => {
@@ -24,7 +24,7 @@ export default function Tools() {
         {tools.map(t => (
           <div key={t.name} className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-4">
             <p className="text-sm font-semibold text-amber mb-1">{t.name}</p>
-            {t.description && <p className="text-xs text-zinc-400">{t.description}</p>}
+            {t.description && <p className="text-sm text-zinc-400">{t.description}</p>}
           </div>
         ))}
       </div>

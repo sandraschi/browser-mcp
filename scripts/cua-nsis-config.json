@@ -4,10 +4,10 @@
   "operator_exe": "browser-mcp-native.exe",
   "backend_process_names": [
     "browser-mcp-native",
-    "browser-mcp-native-backend"
+    "browser-mcp-backend"
   ],
   "backend_port": 10780,
-  "health_path": "/api/v1/health",
+  "health_path": "/health",
   "diagnostics_path": "/api/v1/diagnostics",
   "feature_smoke_path": "/api/v1/diagnostics",
   "window_title_re": "Browser MCP",
@@ -37,6 +37,14 @@
     [
       "Skills",
       "Skills"
+    ],
+    [
+      "Settings",
+      "Settings"
+    ],
+    [
+      "Help",
+      "Help"
     ],
     [
       "API Docs",

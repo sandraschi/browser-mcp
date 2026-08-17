@@ -7,7 +7,6 @@
   <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
   <a href="https://playwright.dev/"><img src="https://img.shields.io/badge/Playwright-powered-45ba4b?style=flat-square" alt="Playwright"></a>
   <a href=""><img src="https://img.shields.io/badge/fleet-SOTA-6366f1?style=flat-square" alt="Fleet SOTA"></a>
-  <a href=""><img src="https://img.shields.io/badge/coverage-85%25-success?style=flat-square" alt="Coverage"></a>
 </p>
 
 **Browser automation + bookmark management — over MCP.** A unified MCP server for controlling Chrome, Firefox, Edge, and Brave: browse pages, click elements, take screenshots, and manage bookmarks across all major browsers. Ships with a React webapp dashboard.
@@ -153,9 +152,12 @@ await browser_bookmarks(
 
 | Tool | Description |
 |------|-------------|
+| `browser_agent(task)` | LLM-driven agentic browsing via browser-use (needs Ollama) |
 | `morning_briefing(config_name)` | Configurable daily page routine with 4 built-in profiles |
 | `browse_items(items_json, task)` | Browse a list of links (from aiwatcher/arxiv/gitops) with summaries |
 | `browse_workflow(task, initial_url)` | Multi-step agentic browsing from natural language task |
+
+System tools: `browser_help(topic)` (documentation) and `browser_shutdown(confirm=true)` (graceful stop).
 
 **Morning briefing profiles** (defined in `conf/morning_pages.json`):
 
@@ -205,6 +207,34 @@ await browse_items(items_json=issues)
 
 ---
 
+## REST API (HTTP mode)
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /health` | Liveness, version, uptime, tool count |
+| `GET /api/status` | Same as health |
+| `GET /api/capabilities` | Feature flags |
+| `GET /api/skills` | Skill listing |
+| `GET /api/llm/discover` | Ollama/LM Studio provider probe |
+| `POST /api/llm/chat` | OpenAI-compatible chat proxy to local LLM |
+| `GET /api/fleet/webapps` | Fleet webapp discovery |
+| `POST /api/shutdown` | Graceful shutdown |
+| `GET /api/v1/diagnostics` | CUA smoke-test diagnostics |
+| `POST /mcp` | MCP streamable HTTP transport |
+| `GET /docs` | Swagger UI |
+
+## Documentation
+
+- [INSTALL.md](INSTALL.md) - installation
+- [docs/CONFIGURATION.md](docs/CONFIGURATION.md) - env vars and ports
+- [docs/TOOLS.md](docs/TOOLS.md) - full tool reference
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - layout and commands
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - common issues
+- [CHANGELOG.md](CHANGELOG.md) - history
+- [llms-full.txt](llms-full.txt) - LLM reference
+
+---
+
 ## Architecture
 
 ### Browser Control Layers
@@ -228,20 +258,24 @@ await browse_items(items_json=issues)
 browser-mcp/
 ├── src/browser_mcp/
 │   ├── server.py              # MCP tools + browser lifecycle
-│   ├── app.py                 # FastAPI app with /health + MCP mount
+│   ├── app.py                 # FastAPI app (REST + /mcp mount)
 │   ├── config.py              # Environment-based settings
+│   ├── prefab_cards.py        # Prefab UI cards (in-chat rich UI)
 │   ├── __main__.py            # CLI entry point (stdio / HTTP)
-│   └── bookmarks/             # Bookmark management backend
-│       ├── portmanteau.py     # Main browser_bookmarks MCP tool
-│       ├── firefox_bookmarks.py    # Firefox SQLite backend
-│       ├── chromium_common.py      # Chrome/Edge/Brave JSON backend
-│       ├── sync.py            # Cross-browser sync
-│       └── firefox/           # 13 submodules (db, status, utils, etc.)
+│   ├── bookmarks/             # Bookmark management backend
+│   │   ├── portmanteau.py     # Main browser_bookmarks MCP tool
+│   │   ├── firefox_bookmarks.py    # Firefox SQLite backend
+│   │   ├── chromium_common.py      # Chrome/Edge/Brave JSON backend
+│   │   ├── sync.py            # Cross-browser sync
+│   │   └── firefox/           # 13 submodules (db, status, utils, etc.)
+│   └── workflows/             # agentic tools (browser_agent, briefing, items, workflow)
+├── tests/                     # pytest suite
 ├── webapp/                    # React + Vite dashboard (port 10781)
 │   ├── src/
-│   │   ├── pages/Dashboard.tsx
-│   │   └── pages/Bookmarks.tsx
+│   │   ├── pages/             # Dashboard, Bookmarks, Tools, Chat, Skills, Apps, Settings, Help, ApiDocs
+│   │   └── ...
 │   └── package.json
+├── native/                    # Tauri 2.0 wrapper (embedded backend)
 └── justfile
 ```
 

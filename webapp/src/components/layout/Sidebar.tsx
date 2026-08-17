@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, LayoutDashboard, Globe, MessageSquare, Code2, Sparkles, LayoutGrid, FileText, Bookmark } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard, MessageSquare, Code2, Sparkles, LayoutGrid, FileText, Bookmark, Settings as SettingsIcon, HelpCircle } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 interface SidebarProps { collapsed: boolean; onToggle: () => void; }
@@ -10,6 +10,8 @@ const nav = [
   { to: '/chat', label: 'Chat', icon: MessageSquare },
   { to: '/apps', label: 'Apps', icon: LayoutGrid },
   { to: '/skills', label: 'Skills', icon: Sparkles },
+  { to: '/settings', label: 'Settings', icon: SettingsIcon },
+  { to: '/help', label: 'Help', icon: HelpCircle },
   { to: '/api-docs', label: 'API Docs', icon: FileText },
 ];
 
@@ -20,7 +22,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside className={`flex flex-col border-r border-zinc-700/50 bg-zinc-950 transition-[width] duration-200 ${collapsed ? 'w-16' : 'w-56'}`}>
       <div className="flex items-center justify-between px-3 pt-4 pb-2 border-b border-zinc-700/50">
-        {!collapsed && <span className="text-xs font-semibold tracking-wider text-zinc-500">Navigation</span>}
+        {!collapsed && <span className="text-sm font-semibold tracking-wider text-zinc-400">Navigation</span>}
         <button type="button" onClick={onToggle} className="p-1 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800">
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>

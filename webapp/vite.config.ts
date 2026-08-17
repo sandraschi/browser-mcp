@@ -7,11 +7,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     allowedHosts: ['goliath'],
-    port: 10777,
+    port: 10781,
     proxy: {
-      '/health': { target: 'http://127.0.0.1:10776', changeOrigin: true },
-      '/mcp': { target: 'http://127.0.0.1:10776', changeOrigin: true },
-      '/api': { target: 'http://127.0.0.1:10776', changeOrigin: true },
+      '/health': { target: 'http://127.0.0.1:10780', changeOrigin: true },
+      '/mcp': { target: 'http://127.0.0.1:10780', changeOrigin: true },
+      '/api': { target: 'http://127.0.0.1:10780', changeOrigin: true },
     },
   },
 });

@@ -52,7 +52,12 @@ def get_profile_directory(profile_name: str | None = None) -> Path | None:
     if profile_name not in profiles:
         return None
     profile = profiles[profile_name]
-    base_dir = get_profiles_ini_path().parent
+    if profile is None:
+        return None
+    profiles_ini_path = get_profiles_ini_path()
+    if profiles_ini_path is None:
+        return None
+    base_dir = profiles_ini_path.parent
     if profile.get("IsRelative", "1") == "1":
         return base_dir / profile["Path"]
     else:

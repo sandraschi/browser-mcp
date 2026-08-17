@@ -141,11 +141,15 @@ async def _bruteforce_read_operation(
         logger.error(f"Brute force operation failed: {e}", exc_info=True)
         return {"success": False, "error": f"Brute force operation failed: {e!s}"}
     finally:
-        if hasattr(conn, "temp_db_path"):
+        from .firefox.core import forget_temp_db_path, get_temp_db_path
+
+        temp = get_temp_db_path(conn)
+        if temp is not None:
             try:
-                conn.temp_db_path.unlink(missing_ok=True)
+                temp.unlink(missing_ok=True)
             except Exception:
                 pass
+            forget_temp_db_path(conn)
         conn.close()
 
 

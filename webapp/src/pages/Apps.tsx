@@ -25,7 +25,7 @@ export default function Apps() {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
               <span className="font-medium text-zinc-200 text-sm">{a.label}</span>
-              <span className="text-xs text-zinc-600 ml-auto">:{a.port}</span>
+              <span className="text-sm text-zinc-400 ml-auto">:{a.port}</span>
             </div>
           </a>
         ))}

@@ -6,7 +6,7 @@ import json
 import logging
 
 from browser_mcp.browser import close_browser_engine
-from browser_mcp.server import browse_page, mcp
+from browser_mcp.server import mcp
 
 logger = logging.getLogger(__name__)
 
@@ -27,14 +27,15 @@ async def browse_items(
     Each item is visited in a headless browser, text is extracted, and results
     are returned with title, url, text preview, and extraction status.
 
-    Args:
-        items_json: JSON array of items. Each item: {"title": "...", "url": "..."} or {"name": "...", "url": "..."}.
-        task: Natural language description of what to look for on each page.
-        headless: Run browser headless.
-        max_items: Max items to process.
+    ## Return Format
+    {"success": bool, "items_processed": int, "items_total": int,
+     "errors": [{title, url, error}], "results": [{title, url, page_title,
+     text_preview, status, success}], "summary": str, "task": str,
+     "next_steps": [str]}
 
-    Returns:
-        Per-item results with text previews and an overall summary.
+    ## Examples
+    await browse_items(items_json='[{"title": "A", "url": "https://a.com"}]')
+    await browse_items(items_json=json.dumps(items), task="Find pricing", max_items=5)
     """
     try:
         items = json.loads(items_json)
@@ -56,6 +57,8 @@ async def browse_items(
             continue
 
         try:
+            from browser_mcp.server import browse_page
+
             result = await browse_page(url=url, headless=headless)
             text = result.get("text", "")
             results.append(

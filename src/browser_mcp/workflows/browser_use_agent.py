@@ -71,24 +71,23 @@ async def browser_agent(
 
     agent = Agent(
         task=task,
-        llm=llm,
+        llm=llm,  # type: ignore[arg-type]  # ChatBrowserUse | AsyncOpenAI both duck-type BaseChatModel
         browser_profile=profile,
         max_steps=max_steps,
     )
 
     try:
         history = await agent.run()
-        final = (
-            history.final_result()
-            if hasattr(history, "final_result")
-            else str(history.urls[-1] if history.urls else None)
-        )
+        final = history.final_result() if hasattr(history, "final_result") else None
+        urls = list(getattr(history, "urls", None) or [])
+        if final is None and urls:
+            final = urls[-1]
         return ToolResult(
             content={
                 "success": True,
                 "result": final,
-                "steps": len(getattr(history, "action_names", [])),
-                "urls": list(getattr(history, "urls", [])),
+                "steps": len(getattr(history, "action_names", []) or []),
+                "urls": urls,
             }
         )
     except Exception as e:

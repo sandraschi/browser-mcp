@@ -25,14 +25,13 @@ async def browse_workflow(
     Supports: navigating to URLs, extracting text, clicking elements,
     filling inputs, pressing keys, and taking screenshots.
 
-    Args:
-        task: Natural language description (e.g. "Search for 'MCP servers' on GitHub and open the top result").
-        initial_url: Starting URL (empty = about:blank).
-        headless: Run browser headless.
-        max_steps: Maximum browsing steps to execute.
+    ## Return Format
+    {"success": bool, "task": str, "initial_url": str, "steps_taken": int,
+     "steps": [{step, url, title, text_preview}], "errors": [str], "summary": str}
 
-    Returns:
-        Step-by-step log with extracted content from each action.
+    ## Examples
+    await browse_workflow(task="Search for 'MCP servers' on GitHub and open the top result")
+    await browse_workflow(task="Find pricing on example.com", initial_url="https://example.com", max_steps=5)
     """
     steps = []
     errors = []

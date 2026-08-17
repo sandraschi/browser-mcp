@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 const ZOOM_LEVELS = [0.8, 1.0, 1.25, 1.5, 2.0, 3.0];
 
 export function useZoom() {
-  const [zoomIndex, setZoomIndex] = useState(() => {
+  const [, setZoomIndex] = useState(() => {
     try {
       const saved = localStorage.getItem('tauri-zoom');
       return saved ? ZOOM_LEVELS.indexOf(parseFloat(saved)) : 1;

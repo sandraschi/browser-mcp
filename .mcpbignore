@@ -18,8 +18,15 @@ llms-full.txt
 dist/
 build/
 *.mcpb
+mcpb/
 
 # Non-MCP components (webapp, native, scripts)
-native/
+webapp/
 web_sota/
+native/
 scripts/
+
+# Backup dross
+*.bak
+*.bak.*
+*.bak-*

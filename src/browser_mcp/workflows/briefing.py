@@ -7,8 +7,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from browser_mcp.browser import close_browser_engine, ensure_page
-from browser_mcp.server import browse_page, mcp
+from browser_mcp.browser import close_browser_engine
+from browser_mcp.server import mcp
 
 logger = logging.getLogger(__name__)
 
@@ -37,13 +37,14 @@ async def morning_briefing(
 
     Config file: conf/morning_pages.json — add custom profiles.
 
-    Args:
-        config_name: Profile name from morning_pages.json (default, dev, research, fleet).
-        headless: Run browser headless.
-        max_pages: Max pages to visit (prevents runaway).
+    ## Return Format
+    {"success": bool, "profile": str, "label": str, "briefing_date": str,
+     "pages_visited": int, "pages": [{name, url, title, text_preview, status}],
+     "errors": [{url, name, error}], "suggestions": {aiwatcher, next_steps}}
 
-    Returns:
-        Briefing with per-page summaries and overall digest.
+    ## Examples
+    await morning_briefing(config_name="default")
+    await morning_briefing(config_name="dev", max_pages=3)
     """
     config = _load_config()
     profile = config.get("profiles", {}).get(config_name)
@@ -57,7 +58,8 @@ async def morning_briefing(
 
     for page_cfg in pages:
         try:
-            page = await ensure_page(headless=headless)
+            from browser_mcp.server import browse_page
+
             result = await browse_page(url=page_cfg["url"], headless=headless)
             results.append(
                 {

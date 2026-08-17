@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python:
+    name: Python gates
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Sync deps
+        run: uv sync --group dev
+      - name: Ruff lint
+        run: uv run ruff check src/ --quiet
+      - name: Ruff format
+        run: uv run ruff format src/ --check --quiet
+      - name: Pyright types
+        run: uv run pyright src/
+      - name: Pytest
+        run: uv run pytest tests/ -q
+
+  webapp:
+    name: Webapp gates
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: webapp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install deps
+        run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build

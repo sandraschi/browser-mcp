@@ -8,10 +8,26 @@ from .utils import get_profile_directory
 
 logger = logging.getLogger(__name__)
 
+# sqlite3.Connection does not allow dynamic attributes; keep temp copies here
+_temp_db_paths: dict[int, Path] = {}
+
+
+def remember_temp_db_path(conn: sqlite3.Connection, path: Path) -> None:
+    _temp_db_paths[id(conn)] = path
+
+
+def get_temp_db_path(conn: sqlite3.Connection) -> Path | None:
+    return _temp_db_paths.get(id(conn))
+
+
+def forget_temp_db_path(conn: sqlite3.Connection) -> None:
+    _temp_db_paths.pop(id(conn), None)
+
 
 class FirefoxDatabaseUnlocker:
     @staticmethod
     def copy_database_to_temp(db_path: Path) -> Path | None:
+        temp_path: Path | None = None
         try:
             with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as temp_file:
                 temp_path = Path(temp_file.name)
@@ -19,7 +35,7 @@ class FirefoxDatabaseUnlocker:
             return temp_path
         except (PermissionError, OSError, shutil.Error) as e:
             logger.debug(f"Failed to copy database: {e}")
-            if "temp_path" in locals():
+            if temp_path is not None:
                 try:
                     temp_path.unlink(missing_ok=True)
                 except Exception:
@@ -69,7 +85,7 @@ class FirefoxDatabaseUnlocker:
                 cursor.fetchone()
                 cursor.close()
                 logger.info(f"Successfully copied Firefox DB: {temp_db_path}")
-                conn.temp_db_path = temp_db_path
+                remember_temp_db_path(conn, temp_db_path)
                 return conn, "database_copy"
             except sqlite3.Error as e:
                 logger.debug(f"Failed to use copied database: {e}")

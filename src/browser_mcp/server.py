@@ -1,5 +1,5 @@
 """
-FastMCP 3.2 server — Browser automation, bookmark management, and AI browsing workflows.
+FastMCP 3.4 server — Browser automation, bookmark management, and AI browsing workflows.
 
 Tools (automation):
   browse_page(url)              — navigate and extract visible text
@@ -16,9 +16,14 @@ Tools (bookmarks):
   browser_bookmarks(...)        — 17 operations across Chrome, Firefox, Edge, Brave
 
 Tools (AI workflows):
+  browser_agent(task)           — browser-use agentic browsing (LLM-driven)
   morning_briefing(config)      — configurable daily page routine
   browse_items(items_json)      — browse a list of links with structured summaries
   browse_workflow(task)         — multi-step agentic browsing from a natural language task
+
+Tools (system):
+  browser_help(topic)           — server documentation
+  browser_shutdown(confirm)     — graceful server shutdown
 """
 
 from __future__ import annotations
@@ -33,6 +38,9 @@ from fastmcp.server import create_proxy
 
 logger = logging.getLogger(__name__)
 
+# Fire-and-forget tasks kept alive by reference (RUF006)
+_bg_tasks: list[asyncio.Task] = []
+
 mcp = FastMCP(
     "browser-mcp",
     instructions="Browser automation and bookmark management — Playwright + CDP + native bookmarks.",
@@ -40,10 +48,12 @@ mcp = FastMCP(
 )
 
 # Register bookmark tools by importing the registration module
-from browser_mcp.bookmarks import portmanteau  # noqa: F401, E402
+# Register Prefab UI cards (in-chat rich UI for list/status tools)
+from browser_mcp import prefab_cards  # noqa: F401
+from browser_mcp.bookmarks import portmanteau  # noqa: F401
 
 # Register browser-use agentic browsing tool
-from browser_mcp.workflows import browser_use_agent  # noqa: F401, E402
+from browser_mcp.workflows import browser_use_agent  # noqa: F401
 
 # MCP Bridge: proxy to external MCP servers via MCP_BRIDGE_URLS env var
 _bridge_urls = os.environ.get("MCP_BRIDGE_URLS", "")
@@ -58,6 +68,14 @@ if _bridge_urls:
 from browser_mcp.browser import close as close_browser_engine
 from browser_mcp.browser import ensure_page
 
+
+def _effective_headless(headless: bool | None) -> bool:
+    if headless is None:
+        cfg = __import__("browser_mcp.config", fromlist=["load_settings"]).load_settings()
+        return cfg.headless
+    return headless
+
+
 # ── Tools ─────────────────────────────────────────────────────────────────────
 
 
@@ -65,18 +83,21 @@ from browser_mcp.browser import ensure_page
 async def browse_page(url: str, headless: bool | None = None) -> dict:
     """BROWSE_PAGE — Navigate to a URL and extract all visible text content.
 
-    Args:
-        url: The full URL to visit (https://...).
-        headless: Run browser headless (default: True). Set False to see the window.
+    Visits the URL with Playwright (waiting for DOM content), then returns the
+    page title, final URL, HTTP status, and visible inner text (first 20K chars).
 
-    Returns:
-        Page title, URL, visible text content (first 20K chars), and HTTP status.
+    ## Return Format
+    {"success": bool, "title": str, "url": str, "text": str, "status": int}
+    On failure: {"success": false, "error": str, "error_type": str}
+
+    ## Examples
+    await browse_page(url="https://example.com")
+    await browse_page(url="https://example.com", headless=False)
     """
-    cfg = __import__("browser_mcp.config", fromlist=["load_settings"]).load_settings()
-    headless = headless if headless is not None else cfg.headless
+    headless_eff = _effective_headless(headless)
 
     try:
-        page = await ensure_page(headless=headless)
+        page = await ensure_page(headless=headless_eff)
         resp = await page.goto(url, wait_until="domcontentloaded", timeout=30000)
         await asyncio.sleep(1)
 
@@ -92,7 +113,7 @@ async def browse_page(url: str, headless: bool | None = None) -> dict:
             "status": status,
         }
     except Exception as exc:
-        logger.error("browse_page failed: %s", exc)
+        logger.exception("browse_page failed: %s", exc)
         return {"success": False, "error": str(exc), "error_type": type(exc).__name__}
 
 
@@ -100,19 +121,21 @@ async def browse_page(url: str, headless: bool | None = None) -> dict:
 async def click_element(selector: str, headless: bool | None = None) -> dict:
     """CLICK_ELEMENT — Click an element on the current page by CSS selector.
 
-    Args:
-        selector: CSS selector (e.g. 'button#submit', '.nav-link', 'a[href*="login"]').
+    ## Return Format
+    {"success": bool, "clicked": str, "url": str}
+    On failure: {"success": false, "error": str, "error_type": str}
 
-    Returns:
-        success, clicked selector, optional error.
+    ## Examples
+    await click_element(selector="button#submit")
+    await click_element(selector=".nav-link")
     """
     try:
-        page = await ensure_page(headless=headless)
+        page = await ensure_page(headless=_effective_headless(headless))
         await page.click(selector)
         await asyncio.sleep(0.5)
         return {"success": True, "clicked": selector, "url": page.url}
     except Exception as exc:
-        logger.error("click_element failed: %s", exc)
+        logger.exception("click_element failed: %s", exc)
         return {"success": False, "error": str(exc), "error_type": type(exc).__name__}
 
 
@@ -120,18 +143,20 @@ async def click_element(selector: str, headless: bool | None = None) -> dict:
 async def extract_text(selector: str = "body", headless: bool | None = None) -> dict:
     """EXTRACT_TEXT — Extract inner text from a CSS selector.
 
-    Args:
-        selector: CSS selector (default 'body').
+    ## Return Format
+    {"success": bool, "text": str, "url": str, "selector": str}
+    On failure: {"success": false, "error": str, "error_type": str}
 
-    Returns:
-        The text content (first 20K chars), and the URL.
+    ## Examples
+    await extract_text()
+    await extract_text(selector="article.main")
     """
     try:
-        page = await ensure_page(headless=headless)
+        page = await ensure_page(headless=_effective_headless(headless))
         text = await page.inner_text(selector)
         return {"success": True, "text": text[:20000], "url": page.url, "selector": selector}
     except Exception as exc:
-        logger.error("extract_text failed: %s", exc)
+        logger.exception("extract_text failed: %s", exc)
         return {"success": False, "error": str(exc), "error_type": type(exc).__name__}
 
 
@@ -139,16 +164,23 @@ async def extract_text(selector: str = "body", headless: bool | None = None) -> 
 async def screenshot(headless: bool | None = None) -> dict:
     """SCREENSHOT — Take a PNG screenshot of the current viewport.
 
-    Returns:
-        Base64-encoded PNG and the current URL.
+    Returns the image as base64 so hosts can render or save it.
+
+    ## Return Format
+    {"success": bool, "screenshot_b64": str, "url": str, "format": "png"}
+    On failure: {"success": false, "error": str, "error_type": str}
+
+    ## Examples
+    await screenshot()
+    await screenshot(headless=False)
     """
     try:
-        page = await ensure_page(headless=headless)
+        page = await ensure_page(headless=_effective_headless(headless))
         png_bytes = await page.screenshot(full_page=False)
         b64 = base64.b64encode(png_bytes).decode()
         return {"success": True, "screenshot_b64": b64, "url": page.url, "format": "png"}
     except Exception as exc:
-        logger.error("screenshot failed: %s", exc)
+        logger.exception("screenshot failed: %s", exc)
         return {"success": False, "error": str(exc), "error_type": type(exc).__name__}
 
 
@@ -156,19 +188,19 @@ async def screenshot(headless: bool | None = None) -> dict:
 async def fill_input(selector: str, text: str, headless: bool | None = None) -> dict:
     """FILL_INPUT — Type text into an input field (clears existing value first).
 
-    Args:
-        selector: CSS selector for the input field.
-        text: The text to type.
+    ## Return Format
+    {"success": bool, "selector": str}
+    On failure: {"success": false, "error": str, "error_type": str}
 
-    Returns:
-        success status.
+    ## Examples
+    await fill_input(selector="#search", text="MCP servers")
     """
     try:
-        page = await ensure_page(headless=headless)
+        page = await ensure_page(headless=_effective_headless(headless))
         await page.fill(selector, text)
         return {"success": True, "selector": selector}
     except Exception as exc:
-        logger.error("fill_input failed: %s", exc)
+        logger.exception("fill_input failed: %s", exc)
         return {"success": False, "error": str(exc), "error_type": type(exc).__name__}
 
 
@@ -176,24 +208,33 @@ async def fill_input(selector: str, text: str, headless: bool | None = None) -> 
 async def press_key(key: str, headless: bool | None = None) -> dict:
     """PRESS_KEY — Press a keyboard key (Enter, Escape, ArrowDown, Tab, etc.).
 
-    Args:
-        key: Playwright key name (e.g. 'Enter', 'Escape', 'Tab', 'ArrowDown').
+    ## Return Format
+    {"success": bool, "key": str}
+    On failure: {"success": false, "error": str, "error_type": str}
 
-    Returns:
-        success status.
+    ## Examples
+    await press_key(key="Enter")
+    await press_key(key="ArrowDown")
     """
     try:
-        page = await ensure_page(headless=headless)
+        page = await ensure_page(headless=_effective_headless(headless))
         await page.keyboard.press(key)
         return {"success": True, "key": key}
     except Exception as exc:
-        logger.error("press_key failed: %s", exc)
+        logger.exception("press_key failed: %s", exc)
         return {"success": False, "error": str(exc), "error_type": type(exc).__name__}
 
 
 @mcp.tool()
 async def close_browser() -> dict:
-    """CLOSE_BROWSER — Close the browser and release resources."""
+    """CLOSE_BROWSER — Close the browser and release Playwright resources.
+
+    ## Return Format
+    {"success": bool, "message": str}
+
+    ## Examples
+    await close_browser()
+    """
     await close_browser_engine()
     return {"success": True, "message": "Browser closed"}
 
@@ -208,13 +249,15 @@ async def list_browsers() -> dict:
     Scans common installation paths for Chrome, Firefox, Edge, and Brave.
     Also reports Firefox profiles from profiles.ini.
 
-    Returns:
-        dict with installed browsers and their paths.
+    ## Return Format
+    {"success": bool, "browsers": {"<name>": {"installed": bool, "path"?: str, "profiles"?: [str]}}}
+
+    ## Examples
+    await list_browsers()
     """
     import os as _os
 
-    browsers = {}
-    # Check common paths
+    browsers: dict = {}
     checks = {
         "chrome": [r"Google\Chrome\Application\chrome.exe", r"Google\Chrome SxS\Application\chrome.exe"],
         "firefox": [r"Mozilla Firefox\firefox.exe"],
@@ -237,7 +280,6 @@ async def list_browsers() -> dict:
             browsers[name] = {"path": found, "installed": True}
         else:
             browsers[name] = {"installed": False}
-    # Firefox profiles
     try:
         from .bookmarks.firefox.utils import parse_profiles_ini
 
@@ -245,7 +287,7 @@ async def list_browsers() -> dict:
         if profiles:
             browsers["firefox"]["profiles"] = list(profiles.keys())
     except Exception:
-        pass
+        logger.warning("list_browsers: could not parse Firefox profiles", exc_info=True)
     return {"success": True, "browsers": browsers}
 
 
@@ -256,12 +298,13 @@ async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
     Uses chrome --headless --dump-dom or firefox --screenshot for quick
     operations without the overhead of a full Playwright browser session.
 
-    Args:
-        url: The URL to visit.
-        browser: 'chrome' or 'firefox' (default chrome).
+    ## Return Format
+    {"success": bool, "browser": str, "url": str, "text"|"screenshot": str}
+    On failure: {"success": false, "error": str}
 
-    Returns:
-        Extracted text content (Chrome) or screenshot path (Firefox).
+    ## Examples
+    await browse_url_cli(url="https://example.com")
+    await browse_url_cli(url="https://example.com", browser="firefox")
     """
     import subprocess
     import tempfile
@@ -280,6 +323,7 @@ async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
         except FileNotFoundError:
             return {"success": False, "error": "Chrome not found on PATH. Install Chrome or use browse_page instead."}
         except Exception as e:
+            logger.warning("browse_url_cli (chrome) failed: %s", e)
             return {"success": False, "error": str(e)}
     elif browser == "firefox":
         try:
@@ -294,8 +338,94 @@ async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
         except FileNotFoundError:
             return {"success": False, "error": "Firefox not found on PATH. Install Firefox or use browse_page instead."}
         except Exception as e:
+            logger.warning("browse_url_cli (firefox) failed: %s", e)
             return {"success": False, "error": str(e)}
     return {"success": False, "error": f"Unsupported browser: {browser}"}
 
 
+# ── System tools ──────────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+async def browser_help(topic: str = "overview") -> dict:
+    """BROWSER_HELP — Server documentation and tool index.
+
+    Topics: overview, automation, bookmarks, workflows, configuration.
+
+    ## Return Format
+    {"success": bool, "topic": str, "help": str}
+
+    ## Examples
+    await browser_help()
+    await browser_help(topic="bookmarks")
+    """
+    docs = {
+        "overview": (
+            "browser-mcp: Playwright browser automation + cross-browser bookmark management.\n"
+            "Tools: browse_page, click_element, extract_text, screenshot, fill_input, press_key,\n"
+            "close_browser, list_browsers, browse_url_cli, browser_bookmarks (17 ops), browser_agent,\n"
+            "morning_briefing, browse_items, browse_workflow, browser_help, browser_shutdown.\n"
+            "HTTP mode: BROWSER_MCP_PORT=10780 uv run python -m browser_mcp --serve\n"
+            "MCP endpoint: http://127.0.0.1:10780/mcp (streamable HTTP)"
+        ),
+        "automation": (
+            "browse_page(url) - navigate and extract visible text\n"
+            "click_element(selector) - click by CSS selector\n"
+            "extract_text(selector) - inner text of an element\n"
+            "screenshot() - viewport PNG as base64\n"
+            "fill_input(selector, text) - type into inputs\n"
+            "press_key(key) - keyboard keys\n"
+            "close_browser() - release Playwright resources"
+        ),
+        "bookmarks": (
+            "browser_bookmarks(operation, browser, ...) - list, get, add, edit, delete, search,\n"
+            "sync, dedupe, tags, age analysis, broken-link check, export across chrome/firefox/edge/brave."
+        ),
+        "workflows": (
+            "browser_agent(task) - browser-use agentic browsing with an LLM\n"
+            "morning_briefing(config) - daily page routine from JSON config\n"
+            "browse_items(items_json) - browse a list of links with summaries\n"
+            "browse_workflow(task) - multi-step agentic browsing"
+        ),
+        "configuration": (
+            "BROWSER_MCP_PORT (default 10780), BROWSER_MCP_HOST (127.0.0.1),\n"
+            "HEADLESS (true), LLM_BASE_URL (http://127.0.0.1:11434), LLM_MODEL,\n"
+            "MCP_BRIDGE_URLS (comma-separated upstream proxies)"
+        ),
+    }
+    body = docs.get(topic.lower(), docs["overview"])
+    return {"success": True, "topic": topic, "help": body}
+
+
+@mcp.tool(annotations={"destructiveHint": True})
+async def browser_shutdown(confirm: bool = False) -> dict:
+    """BROWSER_SHUTDOWN — Gracefully shut down the browser-mcp server.
+
+    Requires confirm=True to prevent accidental termination. In HTTP mode the
+    server process exits after a short delay; in stdio mode the parent client
+    closing the stream ends the process.
+
+    ## Return Format
+    {"success": bool, "message": str}
+
+    ## Examples
+    await browser_shutdown(confirm=True)
+    """
+    if not confirm:
+        return {"success": False, "message": "Set confirm=True to shut down the server."}
+
+    async def _exit() -> None:
+        await asyncio.sleep(0.3)
+        os._exit(0)
+
+    _shutdown_task = asyncio.create_task(_exit())
+    _bg_tasks.append(_shutdown_task)
+    return {"success": True, "message": "Server shutting down"}
+
+
 # Register workflow tools (imported here to avoid circular imports with agentic.py)
+from browser_mcp.workflows import (
+    agentic,  # noqa: F401
+    briefing,  # noqa: F401
+    link_processor,  # noqa: F401
+)

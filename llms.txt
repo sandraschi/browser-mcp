@@ -9,5 +9,5 @@
 ## Quick start
 ```sh
 uv run browser-mcp                    # stdio (Claude Desktop)
-MCP_PORT=10776 uv run browser-mcp     # HTTP mode
+uv run python -m browser_mcp --serve  # HTTP mode on 10780
 ```

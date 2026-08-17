@@ -23,7 +23,6 @@ class TagManager:
     async def find_similar_tags(self) -> list[dict[str, Any]]:
         tags = await self.list_tags()
         similar = []
-        seen = set()
         for i, t1 in enumerate(tags):
             for j, t2 in enumerate(tags):
                 if i < j:

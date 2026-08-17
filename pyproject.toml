@@ -20,6 +20,7 @@ dependencies = [
     "psutil>=5.9.0",
     "aiohttp>=3.9.0",
     "browser-use>=0.13.0",
+    "prefab-ui>=0.14.0",
 ]
 
 [project.optional-dependencies]
@@ -40,8 +41,12 @@ line-length = 120
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "B", "S", "UP", "RUF"]
+select = ["E", "F", "W", "I", "B", "S", "UP", "RUF", "T20"]
 ignore = ["S101", "B008", "E501", "S106", "S110", "S112", "S101", "B008", "E501", "S106", "S110", "S112", "RUF012", "S603", "S607", "S324", "E402"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/**" = ["T20"]
+"tests/**" = ["T20"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -51,4 +56,8 @@ indent-style = "space"
 dev = [
     "pyinstaller>=6.21.0",
     "ruff>=0.16.0,<0.17",
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "pyright>=1.1.390",
+    "pre-commit>=4.0.0",
 ]

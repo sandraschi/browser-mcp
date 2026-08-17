@@ -33,7 +33,9 @@ class LinkChecker:
         async with aiohttp.ClientSession() as session:
             for bm in bookmarks:
                 try:
-                    async with session.head(bm["url"], allow_redirects=True, timeout=10) as resp:
+                    async with session.head(
+                        bm["url"], allow_redirects=True, timeout=aiohttp.ClientTimeout(total=10)
+                    ) as resp:
                         if resp.status >= 400:
                             broken.append(
                                 {"bookmark_id": bm["id"], "title": bm["title"], "url": bm["url"], "status": resp.status}
