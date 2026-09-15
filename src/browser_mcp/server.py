@@ -1,29 +1,29 @@
 """
-FastMCP 3.4 server — Browser automation, bookmark management, and AI browsing workflows.
+FastMCP 3.4 server - Browser automation, bookmark management, and AI browsing workflows.
 
 Tools (automation):
-  browse_page(url)              — navigate and extract visible text
-  click_element(selector)       — click elements by CSS selector
-  extract_text(selector)        — extract text from any element
-  screenshot()                  — viewport PNG screenshot
-  fill_input(selector, text)    — type into input fields
-  press_key(key)                — press keyboard keys
-  close_browser()               — release Playwright resources
-  list_browsers()               — detect installed browsers and profiles
-  browse_url_cli(url, browser)  — headless CLI mode (no Playwright overhead)
+  browse_page(url)              - navigate and extract visible text
+  click_element(selector)       - click elements by CSS selector
+  extract_text(selector)        - extract text from any element
+  screenshot()                  - viewport PNG screenshot
+  fill_input(selector, text)    - type into input fields
+  press_key(key)                - press keyboard keys
+  close_browser()               - release Playwright resources
+  list_browsers()               - detect installed browsers and profiles
+  browse_url_cli(url, browser)  - headless CLI mode (no Playwright overhead)
 
 Tools (bookmarks):
-  browser_bookmarks(...)        — 17 operations across Chrome, Firefox, Edge, Brave
+  browser_bookmarks(...)        - 17 operations across Chrome, Firefox, Edge, Brave
 
 Tools (AI workflows):
-  browser_agent(task)           — browser-use agentic browsing (LLM-driven)
-  morning_briefing(config)      — configurable daily page routine
-  browse_items(items_json)      — browse a list of links with structured summaries
-  browse_workflow(task)         — multi-step agentic browsing from a natural language task
+  browser_agent(task)           - browser-use agentic browsing (LLM-driven)
+  morning_briefing(config)      - configurable daily page routine
+  browse_items(items_json)      - browse a list of links with structured summaries
+  browse_workflow(task)         - multi-step agentic browsing from a natural language task
 
 Tools (system):
-  browser_help(topic)           — server documentation
-  browser_shutdown(confirm)     — graceful server shutdown
+  browser_help(topic)           - server documentation
+  browser_shutdown(confirm)     - graceful server shutdown
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ _bg_tasks: list[asyncio.Task] = []
 
 mcp = FastMCP(
     "browser-mcp",
-    instructions="Browser automation and bookmark management — Playwright + CDP + native bookmarks.",
+    instructions="Browser automation and bookmark management - Playwright + CDP + native bookmarks.",
     version="0.3.0",
 )
 
@@ -80,20 +80,43 @@ def _effective_headless(headless: bool | None) -> bool:
 
 
 @mcp.tool()
-async def browse_page(url: str, headless: bool | None = None) -> dict:
-    """BROWSE_PAGE — Navigate to a URL and extract all visible text content.
+async def browse_page(url: str, headless: bool | None = None, engine: str = "auto") -> dict:
+    """BROWSE_PAGE - Navigate to a URL and extract all visible text content.
 
-    Visits the URL with Playwright (waiting for DOM content), then returns the
-    page title, final URL, HTTP status, and visible inner text (first 20K chars).
+    Visits the URL (waiting for DOM content), then returns the page title,
+    final URL, HTTP status, and visible inner text (first 20K chars).
+
+    engine: "auto" (Obscura fast path when available, else Playwright),
+    "obscura" (force Obscura fetch), or "playwright" (force Playwright).
 
     ## Return Format
-    {"success": bool, "title": str, "url": str, "text": str, "status": int}
+    {"success": bool, "title": str, "url": str, "text": str, "status": int, "engine": str}
     On failure: {"success": false, "error": str, "error_type": str}
 
     ## Examples
     await browse_page(url="https://example.com")
-    await browse_page(url="https://example.com", headless=False)
+    await browse_page(url="https://example.com", engine="obscura")
     """
+    engine = (engine or "auto").lower()
+    if engine in ("auto", "obscura"):
+        from browser_mcp import obscura
+
+        if obscura.available():
+            text = obscura.fetch(url, timeout=30)
+            if text is not None:
+                lines = text.splitlines()
+                title = lines[0][:200] if lines else ""
+                return {
+                    "success": True,
+                    "title": title,
+                    "url": url,
+                    "text": text[:20000],
+                    "status": 200,
+                    "engine": "obscura",
+                }
+        if engine == "obscura":
+            return {"success": False, "error": "Obscura unavailable or fetch failed", "error_type": "obscura"}
+
     headless_eff = _effective_headless(headless)
 
     try:
@@ -111,6 +134,7 @@ async def browse_page(url: str, headless: bool | None = None) -> dict:
             "url": page.url,
             "text": body_text[:20000],
             "status": status,
+            "engine": "playwright",
         }
     except Exception as exc:
         logger.exception("browse_page failed: %s", exc)
@@ -119,7 +143,7 @@ async def browse_page(url: str, headless: bool | None = None) -> dict:
 
 @mcp.tool()
 async def click_element(selector: str, headless: bool | None = None) -> dict:
-    """CLICK_ELEMENT — Click an element on the current page by CSS selector.
+    """CLICK_ELEMENT - Click an element on the current page by CSS selector.
 
     ## Return Format
     {"success": bool, "clicked": str, "url": str}
@@ -141,7 +165,7 @@ async def click_element(selector: str, headless: bool | None = None) -> dict:
 
 @mcp.tool()
 async def extract_text(selector: str = "body", headless: bool | None = None) -> dict:
-    """EXTRACT_TEXT — Extract inner text from a CSS selector.
+    """EXTRACT_TEXT - Extract inner text from a CSS selector.
 
     ## Return Format
     {"success": bool, "text": str, "url": str, "selector": str}
@@ -162,7 +186,7 @@ async def extract_text(selector: str = "body", headless: bool | None = None) -> 
 
 @mcp.tool()
 async def screenshot(headless: bool | None = None) -> dict:
-    """SCREENSHOT — Take a PNG screenshot of the current viewport.
+    """SCREENSHOT - Take a PNG screenshot of the current viewport.
 
     Returns the image as base64 so hosts can render or save it.
 
@@ -186,7 +210,7 @@ async def screenshot(headless: bool | None = None) -> dict:
 
 @mcp.tool()
 async def fill_input(selector: str, text: str, headless: bool | None = None) -> dict:
-    """FILL_INPUT — Type text into an input field (clears existing value first).
+    """FILL_INPUT - Type text into an input field (clears existing value first).
 
     ## Return Format
     {"success": bool, "selector": str}
@@ -206,7 +230,7 @@ async def fill_input(selector: str, text: str, headless: bool | None = None) -> 
 
 @mcp.tool()
 async def press_key(key: str, headless: bool | None = None) -> dict:
-    """PRESS_KEY — Press a keyboard key (Enter, Escape, ArrowDown, Tab, etc.).
+    """PRESS_KEY - Press a keyboard key (Enter, Escape, ArrowDown, Tab, etc.).
 
     ## Return Format
     {"success": bool, "key": str}
@@ -227,7 +251,7 @@ async def press_key(key: str, headless: bool | None = None) -> dict:
 
 @mcp.tool()
 async def close_browser() -> dict:
-    """CLOSE_BROWSER — Close the browser and release Playwright resources.
+    """CLOSE_BROWSER - Close the browser and release Playwright resources.
 
     ## Return Format
     {"success": bool, "message": str}
@@ -244,7 +268,7 @@ async def close_browser() -> dict:
 
 @mcp.tool()
 async def list_browsers() -> dict:
-    """LIST_BROWSERS — Detect installed browsers and available profiles.
+    """LIST_BROWSERS - Detect installed browsers and available profiles.
 
     Scans common installation paths for Chrome, Firefox, Edge, and Brave.
     Also reports Firefox profiles from profiles.ini.
@@ -292,34 +316,47 @@ async def list_browsers() -> dict:
 
 
 @mcp.tool()
-async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
-    """BROWSE_URL_CLI — Navigate to a URL using headless CLI (no Playwright).
+async def browse_url_cli(url: str, browser: str = "chrome", engine: str = "auto") -> dict:
+    """BROWSE_URL_CLI - Navigate to a URL using a headless engine (no Playwright session).
 
-    Uses chrome --headless --dump-dom or firefox --screenshot for quick
-    operations without the overhead of a full Playwright browser session.
+    Prefers the Obscura fast/stealth fetch path when available (engine="auto"
+    or "obscura"); otherwise falls back to chrome/firefox headless CLI. Use
+    engine="playwright" to force the native browser CLI path.
 
     ## Return Format
-    {"success": bool, "browser": str, "url": str, "text"|"screenshot": str}
+    {"success": bool, "browser": str, "url": str, "text"|"screenshot": str, "engine": str}
     On failure: {"success": false, "error": str}
 
     ## Examples
     await browse_url_cli(url="https://example.com")
-    await browse_url_cli(url="https://example.com", browser="firefox")
+    await browse_url_cli(url="https://example.com", engine="obscura")
     """
+    engine = (engine or "auto").lower()
+    if engine in ("auto", "obscura"):
+        from browser_mcp import obscura
+
+        if obscura.available():
+            text = obscura.fetch(url, timeout=30)
+            if text is not None:
+                return {"success": True, "browser": "obscura", "url": url, "text": text[:20000], "engine": "obscura"}
+        if engine == "obscura":
+            return {"success": False, "error": "Obscura unavailable or fetch failed", "engine": "obscura"}
+
     import subprocess
     import tempfile
 
     browser = browser.lower()
     if browser == "chrome":
         try:
-            result = subprocess.run(
+            result = await asyncio.to_thread(
+                subprocess.run,
                 ["chrome", "--headless", "--dump-dom", url],
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
             text = result.stdout[:20000] if result.stdout else (result.stderr or "No output")
-            return {"success": True, "browser": "chrome", "url": url, "text": text}
+            return {"success": True, "browser": "chrome", "url": url, "text": text, "engine": "browser-cli"}
         except FileNotFoundError:
             return {"success": False, "error": "Chrome not found on PATH. Install Chrome or use browse_page instead."}
         except Exception as e:
@@ -328,13 +365,14 @@ async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
     elif browser == "firefox":
         try:
             tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-            result = subprocess.run(
+            result = await asyncio.to_thread(
+                subprocess.run,
                 ["firefox", "--headless", "--screenshot", tmp.name, url],
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
-            return {"success": True, "browser": "firefox", "url": url, "screenshot": tmp.name}
+            return {"success": True, "browser": "firefox", "url": url, "screenshot": tmp.name, "engine": "browser-cli"}
         except FileNotFoundError:
             return {"success": False, "error": "Firefox not found on PATH. Install Firefox or use browse_page instead."}
         except Exception as e:
@@ -348,7 +386,7 @@ async def browse_url_cli(url: str, browser: str = "chrome") -> dict:
 
 @mcp.tool()
 async def browser_help(topic: str = "overview") -> dict:
-    """BROWSER_HELP — Server documentation and tool index.
+    """BROWSER_HELP - Server documentation and tool index.
 
     Topics: overview, automation, bookmarks, workflows, configuration.
 
@@ -399,7 +437,7 @@ async def browser_help(topic: str = "overview") -> dict:
 
 @mcp.tool(annotations={"destructiveHint": True})
 async def browser_shutdown(confirm: bool = False) -> dict:
-    """BROWSER_SHUTDOWN — Gracefully shut down the browser-mcp server.
+    """BROWSER_SHUTDOWN - Gracefully shut down the browser-mcp server.
 
     Requires confirm=True to prevent accidental termination. In HTTP mode the
     server process exits after a short delay; in stdio mode the parent client
