@@ -57,10 +57,6 @@ native/target/
 native/gen/
 native/resources/*.exe
 native/binaries/*.exe
-src-tauri/target/
-src-tauri/gen/
-src-tauri/resources/*.exe
-src-tauri/binaries/*.exe
 
 # CUA smoke test reports
 cua-reports/
