@@ -1,4 +1,4 @@
-"""Link processing workflow — browse a list of links with LLM summarization."""
+"""Link processing workflow - browse a list of links with LLM summarization."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ async def browse_items(
     headless: bool = True,
     max_items: int = 10,
 ) -> dict:
-    """BROWSE_ITEMS — Browse a list of items (URLs with titles) and return structured summaries.
+    """BROWSE_ITEMS - Browse a list of items (URLs with titles) and return structured summaries.
 
     Accepts JSON input with items containing title and url fields. This makes it
     easy to chain with aiwatcher-mcp (get_top_items), arxiv-mcp (search_papers),

@@ -147,8 +147,8 @@ async def _bruteforce_read_operation(
         if temp is not None:
             try:
                 temp.unlink(missing_ok=True)
-            except Exception:
-                pass
+            except Exception as unlink_exc:
+                logger.debug(f"Failed to clean up temp db {temp}: {unlink_exc}")
             forget_temp_db_path(conn)
         conn.close()
 

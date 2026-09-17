@@ -1,5 +1,5 @@
 """
-Settings from environment — single source of config.
+Settings from environment - single source of config.
 Never scatter os.getenv outside this module.
 """
 

@@ -1,4 +1,13 @@
 
+## [Unreleased] - 2026-09-17
+
+### Fixed (assfix)
+- Removed `S110`/`S112` from `[tool.ruff.lint] ignore` (were masking silent `except: pass`
+  swallows) and deduplicated the ignore list; fixed the 6 real violations this surfaced with
+  `logger.debug(...)` instead of silent `pass`
+- `justfile` `build-native` recipe now invokes `powershell.exe -NoProfile -File` instead of
+  bare `pwsh`
+
 ## [0.3.1] - 2026-08-17
 
 ### Security (CRITICAL fixes)

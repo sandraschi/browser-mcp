@@ -28,6 +28,13 @@
 | `browse_url_cli(url, browser)` | Headless CLI mode (no Playwright overhead) |
 | `list_browsers()` | Detect installed browsers and profiles |
 
+> **Optional Obscura fast path** — `browse_page` and `browse_url_cli` accept an
+> `engine` param (`auto` | `obscura` | `playwright`). When the Obscura stealth
+> engine binary is present (built at `d:\Dev\repos\external\obscura`, or via
+> `OBSCURA_BIN`), `engine="auto"` uses it as a fast/stealth fetch path and falls
+> back to Playwright automatically when it is missing. `engine="obscura"`
+> forces it (errors if unavailable); `engine="playwright"` forces Playwright.
+
 ### Bookmark Management (4 Browsers)
 
 17 operations across Chrome, Firefox, Edge, and Brave:

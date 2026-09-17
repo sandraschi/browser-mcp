@@ -42,11 +42,12 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "S", "UP", "RUF", "T20"]
-ignore = ["S101", "B008", "E501", "S106", "S110", "S112", "S101", "B008", "E501", "S106", "S110", "S112", "RUF012", "S603", "S607", "S324", "E402"]
+ignore = ["S101", "B008", "E501", "S106", "RUF012", "S603", "S607", "S324", "E402"]
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/**" = ["T20"]
 "tests/**" = ["T20"]
+"src/browser_mcp/__main__.py" = ["T20"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -60,4 +61,8 @@ dev = [
     "pytest-asyncio>=0.24",
     "pyright>=1.1.390",
     "pre-commit>=4.0.0",
+    "pywin32>=311",
+    "pywinauto>=0.6.9",
+    "pillow>=12.2.0",
+    "pytesseract>=0.3.13",
 ]

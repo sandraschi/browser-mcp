@@ -7,7 +7,9 @@ export function useZoom() {
     try {
       const saved = localStorage.getItem('tauri-zoom');
       return saved ? ZOOM_LEVELS.indexOf(parseFloat(saved)) : 1;
-    } catch { return 1; }
+    } catch {
+      return 1;
+    }
   });
 
   const applyZoom = useCallback(async (level: number) => {
@@ -24,7 +26,7 @@ export function useZoom() {
     const wheelHandler = (e: WheelEvent) => {
       if (!e.ctrlKey) return;
       e.preventDefault();
-      setZoomIndex(prev => {
+      setZoomIndex((prev) => {
         const next = e.deltaY < 0 ? Math.min(prev + 1, ZOOM_LEVELS.length - 1) : Math.max(prev - 1, 0);
         if (next !== prev) applyZoom(ZOOM_LEVELS[next]);
         return next;
@@ -35,14 +37,14 @@ export function useZoom() {
       if (!e.ctrlKey) return;
       if (e.key === '=' || e.key === '+') {
         e.preventDefault();
-        setZoomIndex(prev => {
+        setZoomIndex((prev) => {
           const next = Math.min(prev + 1, ZOOM_LEVELS.length - 1);
           if (next !== prev) applyZoom(ZOOM_LEVELS[next]);
           return next;
         });
       } else if (e.key === '-') {
         e.preventDefault();
-        setZoomIndex(prev => {
+        setZoomIndex((prev) => {
           const next = Math.max(prev - 1, 0);
           if (next !== prev) applyZoom(ZOOM_LEVELS[next]);
           return next;

@@ -1,4 +1,4 @@
-"""Agentic browsing workflow — multi-step browser tasks with LLM sampling."""
+"""Agentic browsing workflow - multi-step browser tasks with LLM sampling."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ async def browse_workflow(
     headless: bool = True,
     max_steps: int = 8,
 ) -> dict:
-    """BROWSE_WORKFLOW — Execute a multi-step agentic browsing task.
+    """BROWSE_WORKFLOW - Execute a multi-step agentic browsing task.
 
     Performs a sequence of browser actions driven by a natural language task
     description. Each step navigates, extracts content, and records results.

@@ -15,8 +15,8 @@ pub struct BackendProcess(pub Mutex<Option<Child>>);
 const BACKEND_NAME: &str = "browser-mcp-backend.exe";
 const BACKEND_PORT: u16 = 10780;
 const BACKEND_TAG: &str = "browser-mcp-backend-x86_64-pc-windows-msvc.exe";
-const ENV_PORT: &str = "BROWSER_MCP_PORT";
-const ENV_HOST: &str = "BROWSER_MCP_HOST";
+const ENV_PORT: &str = "PORT";
+const ENV_HOST: &str = "HOST";
 const ENV_TAURI: &str = "BROWSER_MCP_TAURI";
 
 fn dev_backend_path() -> Option<PathBuf> {
@@ -92,22 +92,21 @@ pub fn materialize_backend(app: &AppHandle) -> Result<PathBuf, String> {
 
     let bundled = resolve_bundled_backend(app)?;
     log_line(app, &format!("using bundled backend: {}", bundled.display()));
-    // Strip Windows extended-length prefix
-    let s = bundled.to_string_lossy().to_string();
-    let clean = s.strip_prefix("\\\\?\\").map(PathBuf::from).unwrap_or(bundled.clone());
-    Ok(clean)
+    Ok(bundled)
 }
 
 fn free_port(port: u16) {
     #[cfg(windows)]
     {
-        let script = format!("Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue | ForEach-Object {{ taskkill /F /PID `$_.OwningProcess /T 2>$null }}");
+        let script = format!(
+            "Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue \
+            | ForEach-Object {{ taskkill /F /PID `$_.OwningProcess /T 2>$null }}"
+        );
         let _ = Command::new("powershell.exe")
             .args(["-NoProfile", "-Command", &script])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
+            .stdout(Stdio::null()).stderr(Stdio::null())
             .status();
-        thread::sleep(Duration::from_millis(300));
+        thread::sleep(Duration::from_millis(500));
     }
 }
 

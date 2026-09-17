@@ -1,7 +1,10 @@
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 CHROME_BOOKMARK_PATHS = [
     r"%LOCALAPPDATA%\Google\Chrome\User Data\Default\Bookmarks",
@@ -31,11 +34,27 @@ def _find_first_existing(paths: list[str]) -> Path | None:
     return None
 
 
+def _chrome_time_to_epoch(micros: Any) -> int:
+    """Convert Chrome's date_added (microseconds since 1601-01-01) to unix epoch seconds."""
+    try:
+        return int(int(micros) / 1_000_000) - 11644473600
+    except (TypeError, ValueError):
+        return 0
+
+
 def _flatten_chromium_tree(node: dict[str, Any], parent: str | None = None) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     node_type = node.get("type")
     if node_type == "url":
-        items.append({"title": node.get("name"), "url": node.get("url"), "parent": parent})
+        items.append(
+            {
+                "id": str(node.get("id") or ""),
+                "title": node.get("name"),
+                "url": node.get("url"),
+                "parent": parent,
+                "date_added": _chrome_time_to_epoch(node.get("date_added")),
+            }
+        )
     elif node_type == "folder":
         name = node.get("name")
         for child in node.get("children", []) or []:
@@ -68,8 +87,8 @@ def _walk_ids(node: dict[str, Any], ids: list[int]) -> None:
     node_id = node.get("id")
     try:
         ids.append(int(node_id) if node_id else 0)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Skipping unparseable bookmark node id %r: %s", node_id, exc)
     for child in node.get("children", []) or []:
         _walk_ids(child, ids)
 
@@ -278,6 +297,20 @@ async def list_chromium_bookmarks(browser: str) -> dict[str, Any]:
     paths = {"chrome": CHROME_BOOKMARK_PATHS, "edge": EDGE_BOOKMARK_PATHS, "brave": BRAVE_BOOKMARK_PATHS}
     path = _find_first_existing(paths.get(browser, CHROME_BOOKMARK_PATHS))
     return read_chromium_bookmarks(path)
+
+
+async def check_url_exists(url: str, timeout: int = 8) -> dict[str, Any]:
+    """Probe whether a URL is reachable (HEAD, falling back to GET)."""
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            resp = await client.head(url)
+            if resp.status_code in (405, 501):
+                resp = await client.get(url)
+            return {"success": True, "url": url, "exists": resp.status_code < 400, "status": resp.status_code}
+    except Exception as exc:
+        return {"success": True, "url": url, "exists": False, "status": 0, "error": str(exc)}
 
 
 async def add_chromium_bookmark(browser: str, title: str, url: str, folder: str | None = None) -> dict[str, Any]:

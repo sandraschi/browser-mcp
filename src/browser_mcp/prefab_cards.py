@@ -11,7 +11,7 @@ from browser_mcp.server import mcp
 
 @mcp.tool(app=True, annotations={"readOnlyHint": True})
 async def show_browsers_card() -> ToolResult:
-    """SHOW_BROWSERS_CARD — Installed browsers as a rich in-chat card.
+    """SHOW_BROWSERS_CARD - Installed browsers as a rich in-chat card.
 
     Renders the detection result of `list_browsers()` as a structured card
     with one row per browser.

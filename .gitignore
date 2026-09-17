@@ -13,6 +13,11 @@ build/
 # Node
 node_modules/
 
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -28,6 +33,12 @@ _dashboard/
 mcpb/
 *.mcpb
 
+# Runtime data (sidecar tag store, sqlite DBs)
+data/
+*.sqlite3
+*.db
+*.db-journal
+
 # Batch-edit safety backups
 *.bak
 *.bak.*
@@ -39,3 +50,17 @@ reports/
 .vscode/
 .cursor/
 .windsurf/
+
+# Tauri/NSIS native build artifacts (backend binary gets embedded at build time,
+# never committed source)
+native/target/
+native/gen/
+native/resources/*.exe
+native/binaries/*.exe
+src-tauri/target/
+src-tauri/gen/
+src-tauri/resources/*.exe
+src-tauri/binaries/*.exe
+
+# CUA smoke test reports
+cua-reports/

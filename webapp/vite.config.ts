@@ -11,7 +11,8 @@ export default defineConfig({
     proxy: {
       '/health': { target: 'http://127.0.0.1:10780', changeOrigin: true },
       '/mcp': { target: 'http://127.0.0.1:10780', changeOrigin: true },
-      '/api': { target: 'http://127.0.0.1:10780', changeOrigin: true },
+      // Trailing slash so the /api-docs client route is NOT hijacked by the proxy.
+      '/api/': { target: 'http://127.0.0.1:10780', changeOrigin: true },
     },
   },
 });

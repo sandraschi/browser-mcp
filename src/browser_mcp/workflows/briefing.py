@@ -1,4 +1,4 @@
-"""Morning briefing workflow — configurable daily page routine."""
+"""Morning briefing workflow - configurable daily page routine."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ async def morning_briefing(
     headless: bool = True,
     max_pages: int = 5,
 ) -> dict:
-    """MORNING_BRIEFING — Run your configurable morning browsing routine.
+    """MORNING_BRIEFING - Run your configurable morning browsing routine.
 
     Visits a set of pages defined in the morning_pages.json config profile,
     extracts content from each, and returns a structured briefing.
@@ -35,7 +35,7 @@ async def morning_briefing(
     Built-in profiles: default (HN + GitHub), dev (HN + Python + Lobsters),
     research (arXiv + Reddit ML), fleet (repo activity).
 
-    Config file: conf/morning_pages.json — add custom profiles.
+    Config file: conf/morning_pages.json - add custom profiles.
 
     ## Return Format
     {"success": bool, "profile": str, "label": str, "briefing_date": str,

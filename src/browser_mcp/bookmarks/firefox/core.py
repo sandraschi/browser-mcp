@@ -38,8 +38,8 @@ class FirefoxDatabaseUnlocker:
             if temp_path is not None:
                 try:
                     temp_path.unlink(missing_ok=True)
-                except Exception:
-                    pass
+                except Exception as unlink_exc:
+                    logger.debug(f"Failed to clean up temp db {temp_path}: {unlink_exc}")
             return None
 
     @staticmethod
@@ -91,8 +91,8 @@ class FirefoxDatabaseUnlocker:
                 logger.debug(f"Failed to use copied database: {e}")
                 try:
                     temp_db_path.unlink(missing_ok=True)
-                except Exception:
-                    pass
+                except Exception as unlink_exc:
+                    logger.debug(f"Failed to clean up temp db {temp_db_path}: {unlink_exc}")
         logger.info("Attempting extended timeout method...")
         try:
             conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=5.0)

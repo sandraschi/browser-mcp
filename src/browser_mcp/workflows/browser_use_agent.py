@@ -1,5 +1,5 @@
 """
-Browser Use agentic browsing tool — wraps browser-use Agent for natural language tasks.
+Browser Use agentic browsing tool - wraps browser-use Agent for natural language tasks.
 Registered in server.py via import.
 """
 
