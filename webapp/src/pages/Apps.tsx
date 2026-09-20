@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { API_BASE } from '../lib/api';
 
 interface AppItem {
   label: string;
@@ -12,7 +13,7 @@ export default function Apps() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/fleet/webapps')
+    fetch(`${API_BASE}/api/fleet/webapps`)
       .then((r) => r.json())
       .then((d) => {
         setApps(d.webapps?.filter((a: AppItem) => a.up) || []);

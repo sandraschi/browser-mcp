@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { API_BASE } from '../lib/api';
 
 interface Provider {
   name: string;
@@ -36,13 +37,13 @@ export default function Settings() {
   });
 
   useEffect(() => {
-    fetch('/api/status')
+    fetch(`${API_BASE}/api/status`)
       .then((r) => r.json())
       .then((d) => {
         if (d?.status === 'ok') setHealth(d);
       })
       .catch(() => {});
-    fetch('/api/llm/discover')
+    fetch(`${API_BASE}/api/llm/discover`)
       .then((r) => r.json())
       .then((d) => {
         setProviders(Array.isArray(d.providers) ? d.providers : []);

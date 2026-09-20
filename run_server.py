@@ -5,6 +5,7 @@ import os
 import sys
 
 sys.path.insert(0, "src")
+import mcp.types  # noqa: F401 -- freeze the mcp bootstrap before fastmcp touches it (frozen-exe-only crash)
 import uvicorn
 
 from browser_mcp.app import app, register_uvicorn

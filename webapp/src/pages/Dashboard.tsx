@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { API_BASE } from '../lib/api';
 import { listTools } from '../lib/mcp';
 import { useConnection } from '../store/connection';
 
@@ -14,7 +15,7 @@ export default function Dashboard() {
     let cancelled = false;
     const poll = async () => {
       try {
-        const r = await fetch('/health', { signal: AbortSignal.timeout(5000) });
+        const r = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(5000) });
         if (!cancelled) {
           if (r.ok) {
             const d = await r.json();

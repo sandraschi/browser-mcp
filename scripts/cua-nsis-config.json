@@ -11,6 +11,7 @@
   "diagnostics_path": "/api/v1/diagnostics",
   "feature_smoke_path": "/api/v1/diagnostics",
   "window_title_re": "Browser MCP",
+  "bridge_ok_text": "Browser MCP",
   "nsis_glob": "native/target/release/bundle/nsis/Browser MCP_*_x64-setup.exe",
   "uninstall_registry_filter": "*Browser MCP*",
   "nav_routes": [
@@ -49,6 +50,10 @@
     [
       "API Docs",
       "API Docs"
+    ],
+    [
+      "Logs",
+      "Logs"
     ]
   ]
 }

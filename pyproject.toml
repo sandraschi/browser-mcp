@@ -46,6 +46,7 @@ ignore = ["S101", "B008", "E501", "S106", "RUF012", "S603", "S607", "S324", "E40
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/**" = ["T20"]
+"scripts/cua-smoke.py" = ["S110", "S310"]
 "tests/**" = ["T20"]
 "src/browser_mcp/__main__.py" = ["T20"]
 

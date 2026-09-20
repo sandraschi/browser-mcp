@@ -1,5 +1,6 @@
 import { Download, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { API_BASE } from '../lib/api';
 import { listTools } from '../lib/mcp';
 
 const STORAGE_KEY = 'browser-mcp-chat-history';
@@ -123,7 +124,7 @@ export default function Chat() {
     const sel = PERSONALITIES.find((p) => p.id === personality);
     const personalityPrompt = sel?.prompt ? `\n\nRole:\n${sel.prompt}` : '';
     try {
-      const r = await fetch('/api/llm/chat', {
+      const r = await fetch(`${API_BASE}/api/llm/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

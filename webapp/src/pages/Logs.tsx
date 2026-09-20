@@ -1,5 +1,6 @@
 import { Copy, Eraser, Pause, Play, RefreshCw, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { API_BASE } from '../lib/api';
 
 const LEVELS = ['ALL', 'INFO', 'WARNING', 'ERROR', 'DEBUG'] as const;
 type Level = (typeof LEVELS)[number];
@@ -28,7 +29,7 @@ export default function Logs() {
 
   const load = useCallback(async () => {
     try {
-      const r = await fetch('/api/logs?tail=1000');
+      const r = await fetch(`${API_BASE}/api/logs?tail=1000`);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       setLines(Array.isArray(d.lines) ? d.lines : []);
@@ -62,7 +63,7 @@ export default function Logs() {
 
   const clear = async () => {
     try {
-      await fetch('/api/logs/clear', { method: 'POST' });
+      await fetch(`${API_BASE}/api/logs/clear`, { method: 'POST' });
       setLines([]);
     } catch {
       /* ignore */

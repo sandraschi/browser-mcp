@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { API_BASE } from '../lib/api';
 import { callTool } from '../lib/mcp';
 import BookmarkDetail from './BookmarkDetail';
 
@@ -94,7 +95,7 @@ export default function Bookmarks() {
   const [detail, setDetail] = useState<Bookmark | null>(null);
 
   useEffect(() => {
-    fetch('/api/bookmarks/sources')
+    fetch(`${API_BASE}/api/bookmarks/sources`)
       .then((r) => r.json())
       .then((d) => {
         const s = (d.sources || {}) as Record<string, Source>;
@@ -110,8 +111,8 @@ export default function Bookmarks() {
     setError(null);
     try {
       const [listRes, tagRes] = await Promise.all([
-        fetch(`/api/bookmarks?browser=${encodeURIComponent(browser)}`).then((r) => r.json()),
-        fetch('/api/bookmarks/tags').then((r) => r.json()),
+        fetch(`${API_BASE}/api/bookmarks?browser=${encodeURIComponent(browser)}`).then((r) => r.json()),
+        fetch(`${API_BASE}/api/bookmarks/tags`).then((r) => r.json()),
       ]);
       const allItems: Bookmark[] = listRes.bookmarks || [];
       const tagMap: Record<string, string[]> = tagRes.tag_map || {};

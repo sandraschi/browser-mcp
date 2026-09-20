@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { API_BASE } from '../lib/api';
 
 interface Skill {
   name: string;
@@ -12,7 +13,7 @@ export default function Skills() {
   const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/skills')
+    fetch(`${API_BASE}/api/skills`)
       .then((r) => r.json())
       .then((d) => {
         setSkills(Array.isArray(d.skills) ? d.skills : []);

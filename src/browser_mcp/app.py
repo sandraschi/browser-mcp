@@ -9,6 +9,7 @@ import logging
 import os
 import sys
 import time
+from collections import deque
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,17 @@ import httpx
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
+
+# Ring buffer of recently-seen requests, exposed via /api/v1/request-log.
+# Exists specifically so CUA tests (and anyone debugging "webview shows no
+# data, curl works fine") can verify from OUTSIDE the webview whether a
+# fetch from the Tauri app's own webview ever actually reached the backend --
+# a direct HTTP hit to this endpoint bypasses whatever network isolation the
+# webview itself might be subject to (e.g. AppContainer loopback blocking),
+# so it's a reliable oracle even when the webview's own requests are silently
+# dropped. See mcp-central-docs HANDOVER.md 2026-09-17/20 for the incident
+# that motivated this.
+_REQUEST_LOG: deque[dict[str, Any]] = deque(maxlen=200)
 
 from browser_mcp.config import load_settings
 from browser_mcp.logs import LOG_BUFFER, attach_log_buffer
@@ -184,6 +196,40 @@ def build_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.middleware("http")
+    async def _log_requests(request: Request, call_next):
+        entry = {
+            "ts": time.time(),
+            "method": request.method,
+            "path": request.url.path,
+            "origin": request.headers.get("origin", ""),
+            "client": request.client.host if request.client else "",
+        }
+        try:
+            response = await call_next(request)
+            entry["status"] = response.status_code
+        except Exception:
+            entry["status"] = -1
+            raise
+        finally:
+            _REQUEST_LOG.append(entry)
+        return response
+
+    @app.get("/api/v1/request-log")
+    async def request_log(origin_contains: str = ""):
+        """Recent requests this backend has actually received, newest last.
+
+        Query directly (curl/python), never through the webview -- the
+        whole point is to be checkable even when the webview's own network
+        path is broken or isolated. Filter with ?origin_contains=tauri to
+        see only requests whose Origin header suggests they came from the
+        Tauri webview, as opposed to a CUA script's own direct health checks.
+        """
+        entries = list(_REQUEST_LOG)
+        if origin_contains:
+            entries = [e for e in entries if origin_contains.lower() in e["origin"].lower()]
+        return {"count": len(entries), "requests": entries}
 
     @app.get("/health")
     async def health():

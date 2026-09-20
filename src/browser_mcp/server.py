@@ -33,8 +33,8 @@ import base64
 import logging
 import os
 
-from fastmcp import FastMCP
 from fastmcp.server import create_proxy
+from fastmcp.server.server import FastMCP
 
 logger = logging.getLogger(__name__)
 

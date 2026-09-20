@@ -1,5 +1,6 @@
 import { FileText, HelpCircle, Minus, Plus, Wifi, WifiOff } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { API_BASE } from '../../lib/api';
 import { useConnection } from '../../store/connection';
 
 const ZOOM_LEVELS = [0.8, 1.0, 1.25, 1.5, 2.0, 3.0];
@@ -10,7 +11,7 @@ export default function Topbar({ onHelp, onLogs }: { onHelp: () => void; onLogs:
 
   const refreshHealth = useCallback(async () => {
     try {
-      const r = await fetch('/health', { signal: AbortSignal.timeout(5000) });
+      const r = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(5000) });
       setState(r.ok ? 'connected' : 'offline');
     } catch {
       setState('offline');
