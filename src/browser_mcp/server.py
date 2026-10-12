@@ -102,7 +102,7 @@ async def browse_page(url: str, headless: bool | None = None, engine: str = "aut
         from browser_mcp import obscura
 
         if obscura.available():
-            text = obscura.fetch(url, timeout=30)
+            text = await asyncio.to_thread(obscura.fetch, url, timeout=30)
             if text is not None:
                 lines = text.splitlines()
                 title = lines[0][:200] if lines else ""
@@ -336,7 +336,7 @@ async def browse_url_cli(url: str, browser: str = "chrome", engine: str = "auto"
         from browser_mcp import obscura
 
         if obscura.available():
-            text = obscura.fetch(url, timeout=30)
+            text = await asyncio.to_thread(obscura.fetch, url, timeout=30)
             if text is not None:
                 return {"success": True, "browser": "obscura", "url": url, "text": text[:20000], "engine": "obscura"}
         if engine == "obscura":
