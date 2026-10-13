@@ -37,7 +37,31 @@ jobs:
           node-version: "22"
       - name: Install deps
         run: npm ci
+      - name: Biome lint
+        run: npx biome check src/
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Build
         run: npm run build
+
+  playwright:
+    name: Playwright E2E
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: webapp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: astral-sh/setup-uv@v3
+      - name: Sync backend deps
+        run: uv sync --group dev
+        working-directory: .
+      - name: Install deps
+        run: npm ci
+      - name: Install Playwright browser
+        run: npx playwright install chromium
+      - name: Run E2E
+        run: npx playwright test
