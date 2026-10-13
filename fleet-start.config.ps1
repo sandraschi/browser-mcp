@@ -1,4 +1,4 @@
-﻿# Per-repo fleet start config for browser-mcp
+# Per-repo fleet start config for browser-mcp
 # Edit ports/backend target here - start.ps1 is fleet-standard.
 @{
     Name         = 'browser-mcp'
@@ -10,6 +10,7 @@
         Kind          = 'uvicorn'
         UvicornTarget = 'browser_mcp.app:app'
         SyncExtras    = @('dev')
+        SyncOnStart  = $true
         Env           = @{ WEB_PORT = '10780' }
     }
     Frontend = @{
