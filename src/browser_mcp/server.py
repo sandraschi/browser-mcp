@@ -80,24 +80,76 @@ def _effective_headless(headless: bool | None) -> bool:
 
 
 @mcp.tool()
-async def browse_page(url: str, headless: bool | None = None, engine: str = "auto") -> dict:
-    """BROWSE_PAGE - Navigate to a URL and extract all visible text content.
+async def browse_page(
+    url: str,
+    headless: bool | None = None,
+    engine: str = "auto",
+    include_html: bool = False,
+) -> dict:
+    """BROWSE_PAGE - Fetch a URL and extract visible text content.
 
-    Visits the URL (waiting for DOM content), then returns the page title,
-    final URL, HTTP status, and visible inner text (first 20K chars).
+    Engine ladder, cheapest first: httpx fast path, Obscura stealth binary,
+    Camoufox fingerprint-rotating browser, Playwright as last resort.
 
-    engine: "auto" (Obscura fast path when available, else Playwright),
-    "obscura" (force Obscura fetch), or "playwright" (force Playwright).
+    engine: "auto" (walk the ladder until one works), "httpx" (plain HTTP
+    only, never launch a browser), "obscura" / "camoufox" (force that stealth
+    engine), or "playwright" (force full browser automation).
+
+    include_html: also return raw HTML (truncated to 300k chars) for callers
+    that parse markup themselves (e.g. search result pages).
 
     ## Return Format
-    {"success": bool, "title": str, "url": str, "text": str, "status": int, "engine": str}
-    On failure: {"success": false, "error": str, "error_type": str}
+    {"success": bool, "title": str, "url": str, "text": str, "status": int,
+     "engine": str, "blocked": bool, "html"?: str}
+    On failure: {"success": false, "error": str, "error_type": str, "blocked": bool}
 
     ## Examples
     await browse_page(url="https://example.com")
-    await browse_page(url="https://example.com", engine="obscura")
+    await browse_page(url="https://example.com", engine="camoufox", include_html=True)
     """
+    from browser_mcp import fastfetch
+
     engine = (engine or "auto").lower()
+    if engine not in ("auto", "httpx", "obscura", "camoufox", "playwright"):
+        engine = "auto"
+    saw_blocked = False
+
+    def _ok(title: str, text: str, html: str | None, used: str, status: int = 200) -> dict:
+        out = {
+            "success": True,
+            "title": title,
+            "url": url,
+            "text": (text or "")[:20000],
+            "status": status,
+            "engine": used,
+            "blocked": False,
+        }
+        if include_html and html:
+            out["html"] = html[:300_000]
+        return out
+
+    if engine in ("auto", "httpx"):
+        try:
+            got = await fastfetch.fetch(url, timeout=20.0)
+        except ValueError as exc:
+            return {"success": False, "blocked": False, "error": str(exc), "error_type": "validation"}
+        if got is None:
+            if engine == "httpx":
+                return {"success": False, "blocked": False, "error": "httpx fetch failed", "error_type": "fetch"}
+        else:
+            status, html = got
+            if status == 200 and html and not fastfetch.looks_blocked(status, html):
+                title, text = fastfetch.extract(html)
+                return _ok(title, text, html, "httpx", status)
+            saw_blocked = fastfetch.looks_blocked(status, html)
+            if engine == "httpx":
+                return {
+                    "success": False,
+                    "blocked": saw_blocked,
+                    "error": f"httpx fetch refused (HTTP {status})",
+                    "error_type": "blocked" if saw_blocked else "fetch",
+                }
+
     if engine in ("auto", "obscura"):
         from browser_mcp import obscura
 
@@ -113,32 +165,60 @@ async def browse_page(url: str, headless: bool | None = None, engine: str = "aut
                     "text": text[:20000],
                     "status": 200,
                     "engine": "obscura",
+                    "blocked": False,
                 }
         if engine == "obscura":
-            return {"success": False, "error": "Obscura unavailable or fetch failed", "error_type": "obscura"}
+            return {
+                "success": False,
+                "blocked": False,
+                "error": "Obscura unavailable or fetch failed",
+                "error_type": "obscura",
+            }
 
-    headless_eff = _effective_headless(headless)
+    if engine in ("auto", "camoufox"):
+        from browser_mcp import camoufox
 
-    try:
-        page = await ensure_page(headless=headless_eff)
-        resp = await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-        await asyncio.sleep(1)
+        if camoufox.available():
+            rendered = await camoufox.fetch(url, timeout=30)
+            if rendered is not None:
+                cf_title, cf_html = rendered
+                title, text = fastfetch.extract(cf_html)
+                return _ok(cf_title or title, text, cf_html, "camoufox")
+        if engine == "camoufox":
+            return {
+                "success": False,
+                "blocked": False,
+                "error": f"Camoufox unavailable or fetch failed ({camoufox.install_hint()})",
+                "error_type": "camoufox",
+            }
 
-        title = await page.title()
-        body_text = await page.evaluate("() => document.body?.innerText || ''")
-        status = resp.status if resp else 0
+    last_error = ""
+    if engine in ("auto", "playwright"):
+        headless_eff = _effective_headless(headless)
+        try:
+            page = await ensure_page(headless=headless_eff)
+            resp = await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(1)
 
-        return {
-            "success": True,
-            "title": title,
-            "url": page.url,
-            "text": body_text[:20000],
-            "status": status,
-            "engine": "playwright",
-        }
-    except Exception as exc:
-        logger.exception("browse_page failed: %s", exc)
-        return {"success": False, "error": str(exc), "error_type": type(exc).__name__}
+            title = await page.title()
+            body_text = await page.evaluate("() => document.body?.innerText || ''")
+            status = resp.status if resp else 0
+            html = await page.content() if include_html else None
+
+            return _ok(title, body_text, html, "playwright", status)
+        except Exception as exc:
+            logger.exception("browse_page failed: %s", exc)
+            if engine == "playwright":
+                return {"success": False, "blocked": False, "error": str(exc), "error_type": type(exc).__name__}
+            last_error = str(exc)
+
+    detail = f" (last: {last_error[:200]})" if last_error else ""
+    return {
+        "success": False,
+        "blocked": saw_blocked,
+        "error": f"all engines failed for {url[:120]}{detail}",
+        "error_type": "fetch",
+    }
 
 
 @mcp.tool()
@@ -407,7 +487,9 @@ async def browser_help(topic: str = "overview") -> dict:
             "MCP endpoint: http://127.0.0.1:10780/mcp (streamable HTTP)"
         ),
         "automation": (
-            "browse_page(url) - navigate and extract visible text\n"
+            "browse_page(url, engine, include_html) - fetch + visible text; engine ladder: "
+            "auto (httpx, obscura, camoufox, playwright) | httpx | obscura | camoufox | playwright; "
+            "include_html=True also returns raw markup for parser reuse\\n"
             "click_element(selector) - click by CSS selector\n"
             "extract_text(selector) - inner text of an element\n"
             "screenshot() - viewport PNG as base64\n"

@@ -318,6 +318,32 @@ def build_app() -> FastAPI:
         except Exception as exc:
             return JSONResponse({"error": f"ollama unreachable at {OLLAMA_BASE}: {exc}"}, status_code=503)
 
+    @app.post("/api/fetch")
+    async def api_fetch(request: Request):
+        """Stateless page fetch for fleet consumers (searchstudio, aiwatcher).
+
+        Body: {"url": str, "engine": "auto"|"httpx"|"obscura"|"camoufox"|"playwright",
+               "include_html": bool}. No browser session state - safe for bulk use.
+        Thin wrapper over the browse_page MCP tool; see its docstring for the
+        return contract.
+        """
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse({"success": False, "error": "invalid JSON body"}, status_code=400)
+        url = (body.get("url") or "").strip()
+        if not url:
+            return JSONResponse({"success": False, "error": "url is required"}, status_code=400)
+        engine = (body.get("engine") or "auto").lower()
+        if engine not in ("auto", "httpx", "obscura", "camoufox", "playwright"):
+            return JSONResponse({"success": False, "error": f"unknown engine: {engine}"}, status_code=400)
+        from browser_mcp.server import browse_page
+
+        try:
+            return await browse_page(url=url, engine=engine, include_html=bool(body.get("include_html", False)))
+        except ValueError as exc:
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
+
     @app.get("/api/fleet/webapps")
     async def fleet_webapps():
         apps = []
